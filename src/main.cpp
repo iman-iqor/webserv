@@ -9,7 +9,13 @@
 config createMockConfig()
 {
     Config config;
-    serverBlock server;
+    ServerBlock server;
+    server.listen_directives.push_back(std::make_pair("127.0.0.1", "8080"));
+    server.server_names.push_back("example.com");//ths is just for testing the print function
+    server.root="./www";
+
+    config.servers.push_back(server);
+    return config;
 }
 
 
@@ -40,6 +46,10 @@ int main(int argc,char** argv)
         //OUMAIMA PARSING CONFIG FILE
         Config config;
         //config.parseFile(configPath) //not available for now
-
+        config = createMockConfig();
+        
+        //multiplexing and server setup
+        Server server(config);
+        server.run();
     }
 }
