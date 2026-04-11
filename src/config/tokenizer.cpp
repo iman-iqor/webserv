@@ -1,4 +1,4 @@
-#include "config.hpp"
+#include "Config.hpp"
 
 #include <sstream>
 #include <fstream>
@@ -79,3 +79,4 @@ std::vector<Token> tokenize(std::string &content)
     } 
     return tokens;
 }
+
