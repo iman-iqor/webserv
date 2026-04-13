@@ -28,10 +28,16 @@ class Server
         std::vector<int> listen_fds;//this will store the file descriptors for the listening sockets
         int epoll_fd; //epoll file descriptor
         std::map<int,std::string> client_buffers; //this will store the partial request data for each client socket
+
+        bool isListenSocket(int fd);//this will check if the given file descriptor is one of the listening sockets
+        void handleClient(int client_fd,const std::string &request_data);//this will handle the client request and send the appropriate response
+        bool fileExists(const std::string &path);//this will check if the requested file exists on the server
+        std::string readFile(const std::string &path);//this will read the contents of the requested file and return it as a string
+        std::string getMimeType(const std::string &path);//the mime type is a string that indicates the type of content being served, such as "text/html" for HTML files or "image/png" for PNG images. This function will determine the appropriate mime type based on the file extension of the requested file.
+        
         
     public:
-        Server(Config &config);
-        void run();
+        Server();
 
 
 };
