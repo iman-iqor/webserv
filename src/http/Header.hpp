@@ -1,0 +1,45 @@
+#ifndef HEADER_HPP
+#define HEADER_HPP
+
+#include <iostream>
+#include <string>
+#include <map>
+#include <exception>
+
+#include "Exceptions.hpp"
+#include "../utils/colors.h"
+#include "../utils/utils.hpp"
+
+class Header {
+private:
+    std::map<std::string, std::string> _headers;
+    std::map<std::string, std::string> _cookies;
+    
+    // void spliter( const std::string &s ); // splites the headers
+    // void key_value_spliter( const std::string &s );
+    // void cookies_parser( const std::string &s );
+    // void _pair_parser( const std::string &s, char *del);
+    // void _pair_parser( const std::string &s, std::string &del);
+
+    void _parser( const std::string &s );
+    void _pair_parser( const std::string &s, char del);
+
+public:
+    Header( std::string &s );
+    ~Header( void );
+
+    void validate_headers( void );
+
+    std::string& getHeader( const std::string &key );
+    std::string& getCookie( const std::string &key );
+
+	class HeaderNotFound: public std::exception {
+		virtual const char *what( void ) const throw();
+	};
+
+	class CookieNotFound: public std::exception {
+		virtual const char *what( void ) const throw();
+	};
+};
+
+#endif // HEADER_HPP
