@@ -17,3 +17,10 @@ bool has_any(const std::string &s, const std::string &chars) {
     }
     return false;
 }
+
+std::string& to_lower(std::string &s) {
+    for (size_t i = 0; i < s.length(); ++i) {
+        s[i] = std::tolower(s[i]);
+    }
+    return s;
+}
