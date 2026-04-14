@@ -60,7 +60,7 @@ void Parser::parseServer()
         else if(token.value == "location")
         {
             i++;
-            parseLocation(server);//this too  
+            parseLocation(server);
         }
         else if(token.value == "root")
         {
@@ -75,6 +75,10 @@ void Parser::parseServer()
     if(i >= tokens.size() || tokens[i].type != CLOSE_BRACE)
         throw std::runtime_error("Unclosed server block");
     i++;
+
+    if(server.listen_directives.empty())
+        server.listen_directives.push_back(std::make_pair("0.0.0.0", 8080));
+    
     _config.servers.push_back(server);
 }
 
@@ -198,7 +202,15 @@ long Parser::parseSize(std::string &str)
     return  size;
 }
 
-
+void Parser::validMethod(std::string &str, Location &loc)
+{
+    if(str == "GET" || str == "POST" || str == "DELETE")
+    {
+        loc.methods.push_back(str);
+    }
+    else
+        throw std::runtime_error("Unvalid method value" + str);
+}
 void Parser::parseLocation(ServerBlock &server)
 {
     if(i >= tokens.size() || tokens[i].type != WORD)
@@ -228,7 +240,7 @@ void Parser::parseLocation(ServerBlock &server)
         {
             while(i < tokens.size() && tokens[i].type != SEMICOLON)
             {
-                loc.methods.push_back(tokens[i].value);
+               validMethod(tokens[i].value, loc);
                 i++;
             }
             expectSemicolon();
