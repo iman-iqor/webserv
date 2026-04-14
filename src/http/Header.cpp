@@ -35,8 +35,63 @@ std::string &Header::getCookie( const std::string &key )
 
 void Header::_parser( const std::string &s )
 {
+    std::string str = s.substr(0, s.find("\r\n\r\n"));
     ssize_t pos_a, pos_b;
     std::string key, value, header;
+
+    pos_a = 0;
+    pos_b = str.find("\r\n", pos_a);
+    while (pos_a < str.length()) {
+
+        if (pos_b == std::string::npos)
+            pos_b = str.length();
+
+        header = str.substr(pos_a, pos_b - pos_a);
+        _header_pair_parser(header, ':');
+
+
+        pos_a = pos_b + 2;
+        pos_b = str.find("\r\n", pos_a);
+        if (DEBUG_MODE) std::cout << MAGENTA << "H: " << RESET << header << std::endl;
+    }
+
+    if (DEBUG_MODE) std::cout << "End of headers" << std::endl;
+}
+
+void Header::_header_pair_parser( const std::string &s, char del)
+{
+    ssize_t pos = s.find(del);
+    if (pos == std::string::npos) {
+        throw BadRequestException();
+    }
+
+    std::string key = s.substr(0, pos);
+    to_lower(key);
+    if (key.empty() || has_any(key, " \t\r\n")
+        || (key == "host" && _headers.find("host") != _headers.end())) {
+        throw BadRequestException();
+    }
+
+    std::string value = trim(s.substr(pos + 1));
+    if (key == "host" && (value.empty() || has_any(value, " \t\r\n"))) {
+        throw BadRequestException();
+    }
+    
+    if (key == "cookie") {
+        _cookies_parser(value);
+    }
+    else if (_headers.find(key) != _headers.end() && _headers[key] != "") {
+        _headers[key] += ", " + value;
+    }
+    else {
+        _headers[key] = value;
+    }
+}
+
+void Header::_cookies_parser( const std::string &s )
+{
+    ssize_t pos_a, pos_b;
+    std::string key, value, cookie;
 
     pos_a = 0;
     pos_b = s.find("\r\n", pos_a);
@@ -45,37 +100,35 @@ void Header::_parser( const std::string &s )
         if (pos_b == std::string::npos)
             pos_b = s.length();
 
-        header = s.substr(pos_a, pos_b - pos_a);
-        _pair_parser(header, ':');
+        cookie = s.substr(pos_a, pos_b - pos_a);
+        _cookie_pair_parser(cookie, '=');
 
-
-        pos_a = pos_b + 2;
-        pos_b = s.find("\r\n", pos_a);
-        if (DEBUG_MODE) std::cout << MAGENTA << "H: " << RESET << header << std::endl;
+        pos_a = pos_b + 1;
+        pos_b = s.find(';', pos_a);
+        if (DEBUG_MODE) std::cout << MAGENTA << "C: " << RESET << cookie << std::endl;
     }
 
-    if (DEBUG_MODE) std::cout << "End of headers" << std::endl;
+    if (DEBUG_MODE) std::cout << "End of cookies" << std::endl;
 }
 
-void Header::_pair_parser( const std::string &s, char del)
+/**
+ * TODO: watch for Illegal Characters
+ */
+void Header::_cookie_pair_parser( const std::string &s, char del)
 {
     ssize_t pos = s.find(del);
     if (pos == std::string::npos) {
         throw BadRequestException();
     }
-    std::string key = trim(s.substr(0, pos));
+
+    std::string key = s.substr(0, pos);
     if (key.empty() || has_any(key, " \t\r\n")) {
         throw BadRequestException();
     }
     std::string value = trim(s.substr(pos + 1));
-    if (key == "Host" && (value.empty() || has_any(value, " \t\r\n"))) {
-        throw BadRequestException();
-    }
-    else if (key == "Cookie") {
-        _cookies[value] = value; // TODO: call cookies_parser
-    }
-    else {
-        _headers[key] = value;
+    
+    if (_cookies.find(key) == _cookies.end()) {
+        _cookies[key] = value;
     }
 }
 

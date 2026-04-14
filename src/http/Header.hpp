@@ -14,15 +14,11 @@ class Header {
 private:
     std::map<std::string, std::string> _headers;
     std::map<std::string, std::string> _cookies;
-    
-    // void spliter( const std::string &s ); // splites the headers
-    // void key_value_spliter( const std::string &s );
-    // void cookies_parser( const std::string &s );
-    // void _pair_parser( const std::string &s, char *del);
-    // void _pair_parser( const std::string &s, std::string &del);
 
     void _parser( const std::string &s );
-    void _pair_parser( const std::string &s, char del);
+    void _cookies_parser( const std::string &s );
+    void _header_pair_parser( const std::string &s, char del);
+    void _cookie_pair_parser( const std::string &s, char del);
 
 public:
     Header( std::string &s );
