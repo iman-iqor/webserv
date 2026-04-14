@@ -25,8 +25,11 @@ struct Location {
     std::string index;
     bool autoindex;
     std::map<std::string, std::string> cgi; // this for cgi to support multiples languages
+    std::string upload_path;
     std::string return_url;
     int return_code;
+
+    Location() : autoindex(false), return_code(0) {};
 };
 
 struct ServerBlock {
@@ -36,10 +39,16 @@ struct ServerBlock {
     std::map<int, std::string> error_pages;
     std::vector<Location> locations;
     std::string root;
+
+    ServerBlock() : client_max_body_size(1048576) {};
 };
 
 struct Config {
     std::vector<ServerBlock> servers;
 };
+
+
+std::string readfile(std::string filename);
+std::vector<Token> tokenize(std::string &content);
 
 #endif

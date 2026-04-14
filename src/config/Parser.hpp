@@ -1,7 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "config.hpp"
+#include "Config.hpp"
 
 
 class Parser
@@ -10,6 +10,7 @@ class Parser
         std::vector<Token> tokens;
         size_t i;
         Config _config;
+        std::string _filename;
         
         void parseServer();
         void parseLocation(ServerBlock &server);
@@ -18,8 +19,9 @@ class Parser
         void parseListenDirective(ServerBlock &server);
         long parseSize(std::string &str);
         void parseErrorPages(ServerBlock &server);
+        void validMethod(std::string &str, Location &loc);
     public:
-        Parser(std::vector<Token> &tokens);
+        Parser(std::string filename);
         Config parse();
 };
 
