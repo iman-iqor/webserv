@@ -47,9 +47,11 @@ void Header::validate_headers( void )
 
 std::string &Header::getHeader( const std::string &key )
 {
-    if (_headers.find(key) == _headers.end())
+    std::string lower_key = key;
+    to_lower(lower_key);
+    if (_headers.find(lower_key) == _headers.end())
         throw HeaderNotFound();
-    return _headers[key];
+    return _headers[lower_key];
 }
 
 std::string &Header::getCookie( const std::string &key )
