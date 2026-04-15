@@ -3,10 +3,10 @@
 #define DEBUG_MODE 0
 
 /**
- * cookie-name = token
+ * name = token
  * token = 1*<any CHAR except CTLs or separators>
  */
-bool is_valid_cookie_key(const std::string& s)
+bool is_valid_key(const std::string& s)
 {
     std::string allowed = "!#$%&'*+-.^_`|~";
     for (size_t i = 0; i < s.length(); ++i) {
@@ -93,13 +93,16 @@ void Header::_header_pair_parser( const std::string &s, char del)
 
     std::string key = s.substr(0, pos);
     to_lower(key);
-    if (key.empty() || has_any(key, " \t\r\n")
+    if (key.empty() || !is_valid_key(key)
         || (key == "host" && _headers.find("host") != _headers.end())) {
         throw BadRequestException();
     }
 
     std::string value = trim(s.substr(pos + 1));
     if (key == "host" && (value.empty() || has_any(value, " \t\r\n"))) {
+        throw BadRequestException();
+    }
+    else if (has_any(value, "\r\n")) {
         throw BadRequestException();
     }
     
@@ -155,7 +158,7 @@ void Header::_cookie_pair_parser( const std::string &s, char del)
     }
 
     std::string key = trim(s.substr(0, pos));
-    if (key.empty() || !is_valid_cookie_key(key)) {
+    if (key.empty() || !is_valid_key(key)) {
         throw BadRequestException();
     }
     std::string value = trim(s.substr(pos + 1));
