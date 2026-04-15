@@ -15,7 +15,7 @@ int main() {
     std::cout << "╚══════════════════════════════════════════════════════╝\n";
     std::cout << RESET;
 
-    // std::string s = "Host: localhost\r\nCookie: sessionid =  abc123  ; theme = dark  \r\n\r\n";
+    // std::string s = "Host: localhost\r\nCookie: sessionid=\"abc123\"; theme=dark\r\n\r\n";
     // Header h(s);
 
 
