@@ -1,16 +1,16 @@
 #include<iostream>
 #include<exception>
-#include"config/config.hpp"
-#include"server/server.hpp"
+#include"config/Config.hpp"
+#include"server/Server.hpp"
 #include"http/Request.hpp"
 #include"http/Response.hpp"
 
 //FAKE WHAT OUMAIM WILL GIVE ME
-config createMockConfig()
+Config createMockConfig()
 {
     Config config;
     ServerBlock server;
-    server.listen_directives.push_back(std::make_pair("127.0.0.1", "8080"));
+    server.listen_directives.push_back(std::make_pair("127.0.0.1", 8080));
     server.server_names.push_back("example.com");//ths is just for testing the print function
     server.root="./www";
 
@@ -50,6 +50,12 @@ int main(int argc,char** argv)
         
         //multiplexing and server setup
         Server server(config);
-        server.run();
+        server.start();
     }
+    catch(const std::exception &e)
+    {
+        std::cerr<<"Error: "<<e.what()<<std::endl;
+        return 1;
+    }
+    return 0;
 }
