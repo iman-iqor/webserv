@@ -28,6 +28,8 @@ public:
 
     std::string& getHeader( const std::string &key );
     std::string& getCookie( const std::string &key );
+    bool hasHeader( const std::string &key ) const;
+    bool hasCookie( const std::string &key ) const;
 
 	class HeaderNotFound: public std::exception {
 		virtual const char *what( void ) const throw();

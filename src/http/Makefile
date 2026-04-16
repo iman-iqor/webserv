@@ -5,6 +5,7 @@ NAME = test_http
 SRC = \
 	main.cpp \
 	Header.cpp \
+	Request.cpp \
 	tests/test_utils.cpp \
 	tests/headers_tests.cpp \
 	tests/cookies_tests.cpp \

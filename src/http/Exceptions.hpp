@@ -30,4 +30,11 @@ public:
     }
 };
 
+class NotEmplementedException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "501 Not Implemented";
+    }
+};
+
 #endif // EXCEPTIONS_HPP

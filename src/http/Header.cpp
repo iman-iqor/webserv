@@ -54,6 +54,18 @@ std::string &Header::getHeader( const std::string &key )
     return _headers[lower_key];
 }
 
+bool Header::hasHeader( const std::string &key ) const
+{
+    std::string lower_key = key;
+    to_lower(lower_key);
+    return _headers.find(lower_key) != _headers.end();
+}
+
+bool Header::hasCookie( const std::string &key ) const
+{
+    return _cookies.find(key) != _cookies.end();
+}
+
 std::string &Header::getCookie( const std::string &key )
 {
     if (_cookies.find(key) == _cookies.end())
