@@ -18,6 +18,15 @@ bool has_any(const std::string &s, const std::string &chars) {
     return false;
 }
 
+bool has_other(const std::string &s, std::string &chars) {
+    for (size_t i = 0; i < s.length(); i++) {
+        if (chars.find(s[i]) == std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string& to_lower(std::string &s) {
     for (size_t i = 0; i < s.length(); ++i) {
         s[i] = std::tolower(s[i]);
