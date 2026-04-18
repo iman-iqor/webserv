@@ -14,11 +14,14 @@ MAIN_MOCK = src/main_mock.cpp
 SRC = \
 	src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
+	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
 	src/server/Server.cpp \
 	src/server/Client.cpp \
-	src/server/Socket.cpp
+	src/server/Socket.cpp \
+	src/utils/string_utils.cpp \
+	src/utils/request_utils.cpp
 
 OBJ = $(SRC:.cpp=.o)
 MAIN_OBJ = $(MAIN:.cpp=.o)

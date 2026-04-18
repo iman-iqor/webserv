@@ -70,13 +70,30 @@ void create_mock_server_block(ServerBlock &sb) {
     sb.error_pages[500] = "/error/500.html";
     sb.error_pages[501] = "/error/501.html";
     sb.root = "src/www";
-    Location loc[] = {
-        {"/", "src/www", {"GET"}, "index.html", false, {}, "", "", 0},
-        {"/redirect/", "src/www", {"GET"}, "", false, {}, "", "http://www.example.com", 301}
-    };
-    for (const auto &l : loc) {
-        sb.locations.push_back(l);
-    }
+    
+    // Create Location 1: root
+    Location loc1;
+    loc1.path = "/";
+    loc1.root = "src/www";
+    loc1.methods.push_back("GET");
+    loc1.index = "index.html";
+    loc1.autoindex = false;
+    loc1.upload_path = "";
+    loc1.return_url = "";
+    loc1.return_code = 0;
+    sb.locations.push_back(loc1);
+    
+    // Create Location 2: redirect
+    Location loc2;
+    loc2.path = "/redirect/";
+    loc2.root = "src/www";
+    loc2.methods.push_back("GET");
+    loc2.index = "";
+    loc2.autoindex = false;
+    loc2.upload_path = "";
+    loc2.return_url = "http://www.example.com";
+    loc2.return_code = 301;
+    sb.locations.push_back(loc2);
 }
 
 static std::string make_http_response(int status, const std::string &reason, const std::string &body, const std::string &contentType)
