@@ -1,2 +1,86 @@
-<!-- REDOUANE creates these -->
-<!-- Forbidden -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 Forbidden</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1f2937);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 520px;
+            width: calc(100% - 32px);
+            padding: 48px 32px;
+            text-align: center;
+            background: rgba(17, 24, 39, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        .code {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        h1 {
+            margin: 16px 0 8px;
+            font-size: 2rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .home {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .home:hover {
+            filter: brightness(1.05);
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <p class="code">403</p>
+        <h1>Forbidden</h1>
+        <p>You do not have permission to access this resource.</p>
+        <a class="home" href="/">Back to Home</a>
+    </main>
+</body>
+</html>
