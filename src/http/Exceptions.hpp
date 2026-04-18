@@ -26,14 +26,49 @@
 class BadRequestException : public std::exception {
 public:
     virtual const char* what() const throw() {
-        return "400 Bad Request";
+        return "Bad Request";
     }
 };
 
 class NotEmplementedException : public std::exception {
 public:
     virtual const char* what() const throw() {
-        return "501 Not Implemented";
+        return "Not Implemented";
+    }
+};
+
+class NotFoundException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "Not Found";
+    }
+};
+
+class MethodNotAllowedException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "Method Not Allowed";
+    }
+};
+
+class InternalServerErrorException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "Internal Server Error";
+    }
+};
+
+class ForbiddenException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "Forbidden";
+    }
+};
+
+class RedirectException : public std::exception {
+public:
+    virtual const char* what() const throw() {
+        return "Moved Permanently";
     }
 };
 
