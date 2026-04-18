@@ -6,7 +6,7 @@ NAME = webserv
 MOCK_NAME = webserv_mock
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++11
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 MAIN = src/main.cpp
 MAIN_MOCK = src/main_mock.cpp

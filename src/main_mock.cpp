@@ -9,9 +9,10 @@
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <unordered_map>
+#include <map>
 #include <fstream>
 #include <sys/stat.h>
+#include <sstream>
 
 #include "http/Request.hpp"
 
@@ -74,7 +75,7 @@ void create_mock_server_block(ServerBlock &sb) {
     // Create Location 1: root
     Location loc1;
     loc1.path = "/";
-    loc1.root = "src/www";
+    loc1.root = "src/html";
     loc1.methods.push_back("GET");
     loc1.index = "index.html";
     loc1.autoindex = false;
@@ -86,7 +87,7 @@ void create_mock_server_block(ServerBlock &sb) {
     // Create Location 2: redirect
     Location loc2;
     loc2.path = "/redirect/";
-    loc2.root = "src/www";
+    loc2.root = "src/html";
     loc2.methods.push_back("GET");
     loc2.index = "";
     loc2.autoindex = false;
@@ -96,11 +97,25 @@ void create_mock_server_block(ServerBlock &sb) {
     sb.locations.push_back(loc2);
 }
 
+static std::string int_to_string(int num)
+{
+    std::ostringstream oss;
+    oss << num;
+    return oss.str();
+}
+
+static std::string size_to_string(size_t num)
+{
+    std::ostringstream oss;
+    oss << num;
+    return oss.str();
+}
+
 static std::string make_http_response(int status, const std::string &reason, const std::string &body, const std::string &contentType)
 {
-    std::string response = "HTTP/1.1 " + std::to_string(status) + " " + reason + "\r\n";
+    std::string response = "HTTP/1.1 " + int_to_string(status) + " " + reason + "\r\n";
     response += "Content-Type: " + contentType + "\r\n";
-    response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+    response += "Content-Length: " + size_to_string(body.size()) + "\r\n";
     response += "Connection: close\r\n\r\n";
     response += body;
     return response;
@@ -262,7 +277,7 @@ int main()
         return 1;
     }
 
-    std::unordered_map<int, Request> clients;
+    std::map<int, Request> clients;
     epoll_event events[MAX_EVENTS];
 
     std::cout << "Listening on port " << PORT << std::endl;
@@ -311,8 +326,9 @@ int main()
                         close(clientFd);
                         continue;
                     }
-                    clients[clientFd] = Request();
-                    clients[clientFd].set_server_block(&sb);
+                    Request req;
+                    req.set_server_block(&sb);
+                    clients[clientFd] = req;
                 }
             }
             else
