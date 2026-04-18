@@ -1,6 +1,7 @@
 #include "Request.hpp"
 #include <unistd.h>
 #include <cstdlib>
+#include <sys/socket.h>
 
 #define BUFFER_SIZE 4096
 
@@ -11,6 +12,7 @@ Request::Request( void )
 	_state = READ_START_LINE;
 	_method = "";
 	_path = "";
+	_server_block = NULL;
 	_headers = NULL;
 	_pos = 0;
 	_content_length = 0;
@@ -30,7 +32,27 @@ bool Request::is_finished( void )
 	return (_state == FINISHED);
 }
 
-void Request::read_request( int socket_fd )
+const std::string& Request::get_path( void ) const
+{
+	return _path;
+}
+
+const std::string& Request::get_method( void ) const
+{
+	return _method;
+}
+
+void Request::set_server_block(ServerBlock *server_block)
+{
+	_server_block = server_block;
+}
+
+ServerBlock *Request::get_server_block( void ) const
+{
+	return _server_block;
+}
+
+void Request::read_request( int socket_fd, bool *closed )
 {
 	ssize_t size;
 	char buf[4096];
@@ -40,22 +62,26 @@ void Request::read_request( int socket_fd )
 		size_t to_read = _content_length - _read_bytes;
 		if (to_read > BUFFER_SIZE - 1)
 			to_read = BUFFER_SIZE - 1;
-		size = read(socket_fd, buf, to_read);
+		size = recv(socket_fd, buf, sizeof(buf), 0);
 		if (size < 0)
 			throw BadRequestException();
-		if (size == 0)
+		if (size == 0) {
+			*closed = true;
 			return ;
+		}
+		_read_bytes += size;
 		buf[size] = 0;
 		append_to_buffer(buf);
-		_read_bytes += size;
 	}
 	else
 	{
-		size = read(socket_fd, buf, BUFFER_SIZE - 1);
+		size = recv(socket_fd, buf, sizeof(buf), 0);
 		if (size < 0)
 		throw BadRequestException();
-		if (size == 0)
+		if (size == 0) {
+			*closed = true;
 			return ;
+		}
 		buf[size] = 0;	
 		append_to_buffer(buf);
 	}

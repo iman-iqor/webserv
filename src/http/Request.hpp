@@ -3,6 +3,7 @@
 
 #include "Header.hpp"
 #include "Exceptions.hpp"
+#include "../ config/Config.hpp"
 
 enum RequestState {
 	READ_START_LINE,	// Parse first line: "METHOD SP TARGET SP HTTP/VERSION\r\n"
@@ -24,6 +25,7 @@ class Request {
 	std::string _path;
     std::string _http_version;
     std::string _body;
+	ServerBlock* _server_block;
 
     size_t _pos;
 	size_t _content_length;
@@ -40,7 +42,7 @@ public:
 	~Request( void );
     void _parser( void );
 
-	void read_request( int socket_fd );
+	void read_request( int socket_fd, bool *closed );
     void parse_request( void );
     // void append_to_buffer(const std::string& data);
     void append_to_buffer(const char *s);
@@ -51,6 +53,10 @@ public:
 	bool extract_chunked_body( void );
 
     bool is_finished( void );
+	const std::string& get_path( void ) const;
+	const std::string& get_method( void ) const;
+	void set_server_block(ServerBlock *server_block);
+	ServerBlock *get_server_block( void ) const;
 
 };
 
