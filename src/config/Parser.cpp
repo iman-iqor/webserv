@@ -1,14 +1,19 @@
-#include "parser.hpp"
+#include "Parser.hpp"
 #include <cstdlib>
+#include <sstream>
+
 Config Parser::parse()
 {
+    std::string content = readfile(_filename);
+    this->tokens = tokenize(content);
+
     while(i < tokens.size())
     {
         if(tokens[i].value == "server")
         {
             i++;
             if(i >= tokens.size() || tokens[i].value != "{")
-                throw std::runtime_error("Error: expected { after server keyword in line: " + tokens[i].line);
+                throw std::runtime_error("Error: expected { after server keyword ");
             i++;
             parseServer();
         }
@@ -27,15 +32,17 @@ void Parser::parseServer()
         if(token.value == "listen")
         {
             i++;
-            parseListenDirective(server);// i will implement this next
+            parseListenDirective(server);
             expectSemicolon();
         }
-        else if(token.value == "server_names")
+        else if(token.value == "server_names" ||token.value == "server_name")
         {
-            //add loop here for multiple server names
             i++;
-            server.server_names.push_back(tokens[i].value);
-            i++;
+            while(i < tokens.size() && tokens[i].type != SEMICOLON)
+            {
+                server.server_names.push_back(tokens[i].value);
+                i++;
+            }
             expectSemicolon();
         }
         else if(token.value == "client_max_body_size")
@@ -45,31 +52,44 @@ void Parser::parseServer()
             i++;
             expectSemicolon();
         }
-        else if(token.value == "error_pages")
+        else if(token.value == "error_pages" || token.value == "error_page")
         {
+            i++;
             parseErrorPages(server);
         }
         else if(token.value == "location")
         {
-            parseLocation(server);//this too 
+            i++;
+            parseLocation(server);
         }
         else if(token.value == "root")
         {
             i++;
             server.root = tokens[i].value;
+            i++;
             expectSemicolon();
         }  
+        else
+            throw std::runtime_error("Uknown directive inside servers block");
     }
     if(i >= tokens.size() || tokens[i].type != CLOSE_BRACE)
         throw std::runtime_error("Unclosed server block");
     i++;
+
+    if(server.listen_directives.empty())
+        server.listen_directives.push_back(std::make_pair("0.0.0.0", 8080));
+    
     _config.servers.push_back(server);
 }
 
 void Parser::expectSemicolon()
 {
     if(tokens[i].type != SEMICOLON)
-        throw std::runtime_error("expected semicolon at line " + tokens[i].line);
+    {
+        std::stringstream ss;
+        ss << "expected semicolon at line " << tokens[i].line;
+        throw std::runtime_error(ss.str());
+    }
     i++;
 }
 
@@ -97,7 +117,7 @@ void Parser::parseErrorPages(ServerBlock &server)
         i++;
     }
     if(codes.empty() || i >= tokens.size() || tokens[i].type != WORD)
-        throw   std::runtime_error("missing path or status code for errorPages at line");
+        throw   std::runtime_error("missing path or status code for errorPages");
     std::string path = tokens[i].value;
     i++;
     for (size_t j = 0; j < codes.size(); j++)
@@ -106,12 +126,6 @@ void Parser::parseErrorPages(ServerBlock &server)
     }
     expectSemicolon();
 }
-
-void Parser::parseListenDirective(ServerBlock &server)
-{
-
-}
-
 static bool isNumber(std::string &str)
 {
     for (size_t i = 0; i < str.length(); i++)
@@ -119,8 +133,44 @@ static bool isNumber(std::string &str)
         if(!isdigit(str[i]))
             return false;
     }
-    return str.empty();
+    return !str.empty();
 }
+
+void Parser::parseListenDirective(ServerBlock &server)
+{
+    if(i >= tokens.size())
+        throw std::runtime_error("missig value after listen directive");
+    std::string val = tokens[i].value;
+    std::string  host = "0.0.0.0";
+    int port = 80;
+
+    size_t pos = val.find(':');
+    if(pos != std::string::npos)
+    {
+        host = val.substr(0, pos);
+        std::string portStr = val.substr(pos + 1);
+        if(portStr.empty() || !isNumber(portStr))
+            throw std::runtime_error("mising or invalid port value after host address");
+        port = std::atoi(portStr.c_str());
+    }
+    else
+    {
+        if (isNumber(val))
+            port = std::atoi(val.c_str());
+        else
+            host = val;
+    }
+
+    if(host == "localhost")
+        host = "127.0.0.1";
+    
+    if(port < 0 || port > 65535)
+        throw std::runtime_error("port number out of range");
+
+    server.listen_directives.push_back(std::make_pair(host, port));
+    i++;
+}
+
 
 long Parser::parseSize(std::string &str)
 {
@@ -150,4 +200,98 @@ long Parser::parseSize(std::string &str)
     if(size > 1073741824)
         throw std::runtime_error("Client_max_body_size exceeds 1G limit");
     return  size;
+}
+
+void Parser::validMethod(std::string &str, Location &loc)
+{
+    if(str == "GET" || str == "POST" || str == "DELETE")
+    {
+        loc.methods.push_back(str);
+    }
+    else
+        throw std::runtime_error("Unvalid method value" + str);
+}
+void Parser::parseLocation(ServerBlock &server)
+{
+    if(i >= tokens.size() || tokens[i].type != WORD)
+        throw std::runtime_error("expecting path after location keyword");
+    
+    Location loc;
+    loc.root = server.root;
+    loc.path = tokens[i].value;
+    i++;
+    if(i >= tokens.size() || tokens[i].type != OPEN_BRACE)
+        throw std::runtime_error("expected '{ ' for location block");
+    i++;
+    while(i < tokens.size() && tokens[i].type != CLOSE_BRACE)
+    {
+        std::string key = tokens[i++].value;
+        if(key == "root")
+        {
+            loc.root = tokens[i++].value;
+            expectSemicolon();
+        }
+        else if(key == "autoindex")
+        {
+            loc.autoindex = (tokens[i++].value == "on");
+            expectSemicolon();
+        }
+        else if(key == "methods" || key == "allowed_methods")
+        {
+            while(i < tokens.size() && tokens[i].type != SEMICOLON)
+            {
+               validMethod(tokens[i].value, loc);
+                i++;
+            }
+            expectSemicolon();
+        }
+        else if(key == "index")
+        {
+            loc.index = tokens[i++].value;
+            expectSemicolon();
+        }
+        else if(key == "upload_path")
+        {
+            loc.upload_path = tokens[i++].value;
+            expectSemicolon();
+        }
+        else if(key == "cgi" || key == "cgi_pass")
+        {
+            std::string ext = tokens[i++].value;
+            std::string path = tokens[i++].value;
+            loc.cgi[ext] = path;
+            expectSemicolon();
+        }
+        else if(key == "return_url" || key == "return")
+        {
+            if(key == "return")
+            {
+                loc.return_code = std::atoi(tokens[i++].value.c_str());
+                loc.return_url = tokens[i++].value;
+            }
+            else
+            {
+                loc.return_url = tokens[i++].value;
+            }
+            expectSemicolon();
+        }
+        else if(key == "return_code")
+        {
+            loc.return_code = std::atoi(tokens[i++].value.c_str());
+            expectSemicolon();
+        }
+        else
+            throw std::runtime_error("unvalid directive used inside location block");
+    }
+
+    if(i >= tokens.size() || tokens[i].type != CLOSE_BRACE)
+        throw std::runtime_error("expected '}' for location block");
+    i++;
+
+    server.locations.push_back(loc);
+}
+Parser::Parser(std::string filename)
+{
+    this->i = 0;
+    this->_filename = filename;
 }
