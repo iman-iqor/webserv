@@ -13,7 +13,7 @@
 #include <fstream>
 #include <sys/stat.h>
 
-#include "Request.hpp"
+#include "http/Request.hpp"
 
 static const int PORT = 8080;
 static const int MAX_EVENTS = 64;

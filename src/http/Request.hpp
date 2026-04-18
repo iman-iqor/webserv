@@ -3,7 +3,7 @@
 
 #include "Header.hpp"
 #include "Exceptions.hpp"
-#include "../ config/Config.hpp"
+#include "../config/Config.hpp"
 
 enum RequestState {
 	READ_START_LINE,	// Parse first line: "METHOD SP TARGET SP HTTP/VERSION\r\n"
