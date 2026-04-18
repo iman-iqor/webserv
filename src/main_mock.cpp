@@ -71,8 +71,8 @@ void create_mock_server_block(ServerBlock &sb) {
     sb.error_pages[501] = "/error/501.html";
     sb.root = "src/www";
     Location loc[] = {
-        {"/", "src/www", {"GET"}, "index.html", false, {}, "", 0},
-        {"/redirect/", "src/www", {"GET"}, "", false, {}, "http://www.example.com", 301}
+        {"/", "src/www", {"GET"}, "index.html", false, {}, "", "", 0},
+        {"/redirect/", "src/www", {"GET"}, "", false, {}, "", "http://www.example.com", 301}
     };
     for (const auto &l : loc) {
         sb.locations.push_back(l);
