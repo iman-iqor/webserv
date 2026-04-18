@@ -3,12 +3,15 @@
 # ===================== #
 
 NAME = webserv
+MOCK_NAME = webserv_mock
 
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
+MAIN = src/main.cpp
+MAIN_MOCK = src/main_mock.cpp
+
 SRC = \
-	src/main.cpp \
 	src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
 	src/http/Request.cpp \
@@ -18,6 +21,8 @@ SRC = \
 	src/server/Socket.cpp
 
 OBJ = $(SRC:.cpp=.o)
+MAIN_OBJ = $(MAIN:.cpp=.o)
+MAIN_MOCK_OBJ = $(MAIN_MOCK:.cpp=.o)
 
 # ===================== #
 #         RULES         #
@@ -25,17 +30,22 @@ OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+mock: $(MOCK_NAME)
+
+$(NAME): $(OBJ) $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) $^ -o $(NAME)
+
+$(MOCK_NAME): $(OBJ) $(MAIN_MOCK_OBJ)
+	$(CXX) $(CXXFLAGS) $^ -o $(MOCK_NAME)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ)
+	rm -f $(OBJ) $(MAIN_OBJ) $(MAIN_MOCK_OBJ)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(MOCK_NAME)
 
 re: fclean all
 
@@ -43,4 +53,4 @@ re: fclean all
 #       PHONY           #
 # ===================== #
 
-.PHONY: all clean fclean re
+.PHONY: all mock clean fclean re
