@@ -77,6 +77,7 @@ void create_mock_server_block(ServerBlock &sb) {
     loc1.path = "/";
     loc1.root = "src/html";
     loc1.methods.push_back("GET");
+    loc1.methods.push_back("POST");
     loc1.index = "index.html";
     loc1.autoindex = false;
     loc1.upload_path = "";

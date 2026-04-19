@@ -24,51 +24,90 @@
  * 
  */
 class BadRequestException : public std::exception {
+    std::string _message;
 public:
+    BadRequestException(std::string message = "Bad Request") : _message(message) {}
+    ~BadRequestException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Bad Request";
+        return _message.c_str();
     }
 };
 
 class NotEmplementedException : public std::exception {
+    std::string _message;
 public:
+    NotEmplementedException(std::string message = "Not Implemented") : _message(message) {}
+    ~NotEmplementedException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Not Implemented";
+        return _message.c_str();
     }
 };
 
 class NotFoundException : public std::exception {
+    std::string _message;
 public:
+    NotFoundException(std::string message = "Not Found") : _message(message) {}
+    ~NotFoundException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Not Found";
+        return _message.c_str();
     }
 };
 
 class MethodNotAllowedException : public std::exception {
+    std::string _message;
 public:
+    MethodNotAllowedException(std::string message = "Method Not Allowed") : _message(message) {}
+    ~MethodNotAllowedException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Method Not Allowed";
+        return _message.c_str();
     }
 };
 
 class InternalServerErrorException : public std::exception {
+    std::string _message;
 public:
+    InternalServerErrorException(std::string message = "Internal Server Error") : _message(message) {}
+    ~InternalServerErrorException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Internal Server Error";
+        return _message.c_str();
     }
 };
 
 class ForbiddenException : public std::exception {
+    std::string _message;
 public:
+    ForbiddenException(std::string message = "Forbidden") : _message(message) {}
+    ~ForbiddenException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Forbidden";
+        return _message.c_str();
     }
 };
 
 class RedirectException : public std::exception {
+    std::string _message;
 public:
+    RedirectException(std::string message = "Moved Permanently") : _message(message) {}
+    ~RedirectException() throw() {}
+
     virtual const char* what() const throw() {
-        return "Moved Permanently";
+        return _message.c_str();
+    }
+};
+
+class ServerException : public std::exception {
+    std::string _message;
+public:
+    ServerException(std::string message = "Server Error") : _message(message) {}
+    ~ServerException() throw() {}
+    
+    virtual const char* what() const throw() {
+        return _message.c_str();
     }
 };
 
