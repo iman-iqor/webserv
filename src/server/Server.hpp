@@ -15,6 +15,7 @@
 #include <exception>
 #include <algorithm>
 #include "../http/Request.hpp"
+#include<set>
 
 #include "../config/Config.hpp"
 
@@ -46,8 +47,8 @@ public:
     Server(Config &config);
     void start();
 
-private:
     void setupSockets();
+    void initEpoll();
     void handleEvent(struct epoll_event &event);
 
     void acceptClient(int listen_fd);
