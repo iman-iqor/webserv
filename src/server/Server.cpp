@@ -1,4 +1,5 @@
 #include"Server.hpp"
+#include <cstring> // for memset
 
 Server::Server(Config &config)
 {
@@ -32,6 +33,21 @@ void Server::setupSockets()
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if(sock<0)
            throw std::runtime_error("Failed to create socket");
+        
+        //find the port in listen directives and associate the socket with the corresponding server blocks
+        for (size_t i = 0; i < config.servers.size(); i++)
+        {
+            ServerBlock &server = config.servers[i];
+
+            for (size_t j = 0; j < server.listen_directives.size(); j++)
+            {
+                if (server.listen_directives[j].first == ip && server.listen_directives[j].second == port)
+                {
+                    fd_to_servers[sock].push_back(&server);
+                }
+            }
+        }
+        
         //allow this socket to reuse the address/port even if it’s still in TIME_WAIT
         int opt = 1;
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));// Allow reuse of the address
@@ -39,13 +55,14 @@ void Server::setupSockets()
         fcntl(sock, F_SETFL, O_NONBLOCK);// Set the socket to non-blocking mode
 
         sockaddr_in addr;
+        std::memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;// IPv4
         addr.sin_port = htons(port);// Convert port to network byte order
 
         if (ip == "0.0.0.0")
             addr.sin_addr.s_addr = INADDR_ANY;
-        else
-            inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);// Convert IP address from string to binary form
+        else if(inet_pton(AF_INET, ip.c_str(), &addr.sin_addr) <= 0)
+            throw std::runtime_error("Invalid IP address");
 
         //binding means associating the socket with a specific IP address and port number on the local machine
         if(bind(sock, (sockaddr*)&addr, sizeof(addr))<0)
@@ -61,7 +78,7 @@ void Server::setupSockets()
 }
 void Server::initEpoll()
 {
-    epoll_fd = epoll_create1(0);
+    epoll_fd = epoll_create1(0);// Create an epoll instance and get a file descriptor for it to monitor events on multiple file descriptors efficiently
     if (epoll_fd == -1)
         throw std::runtime_error("epoll_create1 failed");
 

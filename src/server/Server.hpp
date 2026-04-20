@@ -42,6 +42,7 @@ private:
     int epoll_fd;
 
     std::map<int, Client *> clients;
+    std::map<int, std::vector<ServerBlock*> > fd_to_servers;
 
 public:
     Server(Config &config);
