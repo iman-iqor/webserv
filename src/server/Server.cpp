@@ -93,3 +93,146 @@ void Server::initEpoll()
             throw std::runtime_error("epoll_ctl ADD failed");
     }
 }
+void Server::start()
+{
+    struct epoll_event events[1024];// Array to hold events returned by epoll_wait
+
+    while (true)
+    {
+        int nfds = epoll_wait(epoll_fd, events, 1024, -1);// Wait for events on the monitored file descriptors, blocking indefinitely until at least one event occurs. The events are stored in the events array, and nfds indicates how many events were returned.
+
+        if (nfds < 0)
+            throw std::runtime_error("epoll_wait failed");
+
+        for (int i = 0; i < nfds; i++)
+        {
+            handleEvent(events[i]);// Handle each event returned by epoll_wait, which could be a new incoming connection or activity on an existing client socket
+        }
+    }
+}
+
+void Server::handleEvent(struct epoll_event &event)
+{
+    int fd = event.data.fd;
+
+    if (isListenSocket(fd))// Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
+        acceptClient(fd);
+    else
+        handleClient(fd, event.events);// Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
+}
+
+bool Server::isListenSocket(int fd)
+{
+    for (size_t i = 0; i < listen_fds.size(); i++)
+    {
+        if (listen_fds[i] == fd)
+            return true;
+    }
+    return false;
+}
+
+void Server::acceptClient(int listen_fd)
+{
+    int client_fd = accept(listen_fd, NULL, NULL);// Accept a new incoming connection on the listening socket, which returns a new file descriptor for the client socket. The client's address information is not needed in this case, so NULL is passed for the address and its length.
+    if (client_fd < 0)
+        return;
+
+    fcntl(client_fd, F_SETFL, O_NONBLOCK);// Set the client socket to non-blocking mode, allowing for asynchronous I/O operations without blocking the server's main loop without it the server would block on read/write operations, preventing it from handling other clients or accepting new connections until the current operation completes.
+
+    struct epoll_event event;
+    event.events = EPOLLIN;
+    event.data.fd = client_fd;
+
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1)// Register the new client socket with the epoll instance to monitor for incoming data (EPOLLIN events). This allows the server to be notified when the client sends a request or when there is activity on the client socket.
+        throw std::runtime_error("epoll_ctl client add failed");
+
+    clients[client_fd] = new Client(client_fd);
+
+    std::cout << "New client connected: " << client_fd << std::endl;
+}
+
+void Server::closeClient(int fd)
+{
+    if (clients.find(fd) != clients.end())// Check if the client exists in the clients map and if so, delete the Client object and remove it from the map to free up resources associated with that client
+    {
+        delete clients[fd];// Free the memory allocated for the Client object associated with the client file descriptor
+        clients.erase(fd);// Remove the client from the clients map to free up resources associated with that client
+    }
+    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);// Unregister the client socket from the epoll instance to stop monitoring it for events, which is necessary when closing the client connection to prevent the server from trying to access an invalid file descriptor
+    close(fd);
+    std::cout << "Client disconnected: " << fd << std::endl;
+}
+
+void Server::handleClient(int client_fd, uint32_t events)
+{
+    if (events & EPOLLIN) 
+        handleRead(client_fd);
+    else if (events & EPOLLOUT)
+        handleWrite(client_fd);
+}
+
+Client::Client(int fd)
+{
+    this->fd = fd;
+    request_complete = false;
+    ready_to_send = false;
+}
+void Server::processRequest(int client_fd)
+{
+    Client* client = clients[client_fd];
+
+   // 🔵 Redouane's part
+    Request req(client->buffer);     // parse request
+    Response res(req, config);       // build response
+
+    client->response = res.toString(); // final HTTP response
+
+    // switch to EPOLLOUT
+    struct epoll_event event;
+    event.events = EPOLLOUT;
+    event.data.fd = client_fd;
+
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event) == -1)
+        throw std::runtime_error("epoll_ctl MOD failed");
+}
+
+void Server::handleWrite(int client_fd)
+{
+    Client* client = clients[client_fd];
+
+    int sent = send(client_fd,
+                    client->response.c_str(),
+                    client->response.size(),
+                    0);
+
+    if (sent <= 0)
+    {
+        closeClient(client_fd);
+        return;
+    }
+
+    closeClient(client_fd);
+}
+
+void Server::handleRead(int client_fd)
+{
+    Client* client = clients[client_fd];
+
+    char buffer[4096];
+    int bytes = recv(client_fd, buffer, sizeof(buffer), 0);
+
+    if (bytes <= 0)
+    {
+        closeClient(client_fd);
+        return;
+    }
+
+    client->buffer.append(buffer, bytes);
+
+    // check if request is complete
+    if (client->buffer.find("\r\n\r\n") != std::string::npos)
+    {
+        client->request_complete = true;
+        processRequest(client_fd);
+    }
+}

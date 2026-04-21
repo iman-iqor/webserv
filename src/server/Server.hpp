@@ -27,6 +27,7 @@ public:
     std::string buffer;   // incoming request
     std::string response; // outgoing response
 
+
     bool request_complete;
     bool ready_to_send;
 
@@ -46,14 +47,18 @@ private:
 
 public:
     Server(Config &config);
-    void start();
-
     void setupSockets();
     void initEpoll();
+    void start();
+
     void handleEvent(struct epoll_event &event);
 
     void acceptClient(int listen_fd);
     void handleClient(int client_fd, uint32_t events);
+    void handleRead(int client_fd);
+    void processRequest(int client_fd);
+    void handleWrite(int client_fd);
+
 
     bool isListenSocket(int fd);
     void closeClient(int fd);
