@@ -16,23 +16,10 @@
 #include <algorithm>
 #include "../http/Request.hpp"
 #include<set>
+static bool g_shutdown = false;
 
 #include "../config/Config.hpp"
-
-class Client
-{
-public:
-    int fd; // file descriptor for the client socket
-
-    std::string buffer;   // incoming request
-    std::string response; // outgoing response
-
-
-    bool request_complete;
-    bool ready_to_send;
-
-    Client(int fd);
-};
+#include "Client.hpp"
 
 class Server
 {
@@ -47,6 +34,7 @@ private:
 
 public:
     Server(Config &config);
+     ~Server();
     void setupSockets();
     void initEpoll();
     void start();

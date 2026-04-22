@@ -3,8 +3,22 @@
 #include"src/config/Config.hpp"
 #include"src/config/Parser.hpp"
 #include"src/server/Server.hpp"
+#include"src/server/Client.hpp"
 #include"src/http/Request.hpp"
 #include"src/http/Response.hpp"
+#include <signal.h>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
+#include <csignal>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
+
+// ✅ Global flag for signal handling
+
+
+// ✅ Signal handler
+void signalHandler(int signum) {
+    (void)signum;  // Avoid unused parameter warning
+    std::cout << "\nReceived interrupt signal. Shutting down..." << std::endl;
+    g_shutdown = true;
+}
+
 int main(int argc,char** argv)
 {
 
@@ -21,6 +35,8 @@ int main(int argc,char** argv)
     }
     try
     {
+        signal(SIGINT, signalHandler);   // Ctrl+C
+        signal(SIGTERM, signalHandler);  // Termination
         //oumaima
         Parser parser(configPath);
         Config config = parser.parse();
@@ -30,6 +46,8 @@ int main(int argc,char** argv)
         //imane
         Server server(config);
         server.setupSockets();
+        server.initEpoll();
+        server.start();
 
         //redouane
     }
