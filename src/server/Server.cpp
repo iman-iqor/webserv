@@ -139,7 +139,18 @@ void Server::start()
 
         for (int i = 0; i < nfds; i++)
         {
-            handleEvent(events[i]); // Handle each event returned by epoll_wait, which could be a new incoming connection or activity on an existing client socket
+            try
+            {
+                {
+                    
+                    handleEvent(events[i]); // Handle each event returned by epoll_wait, which could be a new incoming connection or activity on an existing client socket
+                }
+            }
+            catch(const std::exception &e)
+            {
+                std::cerr << "Error handling event: " << e.what() << std::endl;
+            }
+            
         }
     }
 }
