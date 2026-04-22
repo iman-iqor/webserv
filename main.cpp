@@ -10,7 +10,7 @@
 #include <csignal>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
 
 // ✅ Global flag for signal handling
-
+bool g_shutdown = false; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit gracefully and perform necessary cleanup before terminating the process.
 
 // ✅ Signal handler
 void signalHandler(int signum) {
@@ -36,7 +36,7 @@ int main(int argc,char** argv)
     try
     {
         signal(SIGINT, signalHandler);   // Ctrl+C
-        signal(SIGTERM, signalHandler);  // Termination
+        signal(SIGTERM, signalHandler);  // this is when the process receives a termination signal, allowing for graceful shutdown in various scenarios (e.g., system shutdown, kill command)
         //oumaima
         Parser parser(configPath);
         Config config = parser.parse();
