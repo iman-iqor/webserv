@@ -1,0 +1,9 @@
+POST /update-profile HTTP/1.1\r
+Host: localhost:8080\r
+User-Agent: Mozilla/5.0\r
+Content-Type: application/x-www-form-urlencoded\r
+Content-Length: 23\r
+Cookie: sessionid=abc123xyz; theme=dark; last_visit=2026-04-03\r
+Connection: keep-alive\r
+\r
+name=Radouane&age=22

@@ -1,2 +1,90 @@
-<!-- REDOUANE creates these -->
-<!-- Internal Server Error -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>500 - Internal Server Error</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #ef4444;
+            --border: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #111827 60%, #1f2937);
+            color: var(--text);
+        }
+
+        .container {
+            width: min(92vw, 560px);
+            padding: 3rem 2rem;
+            text-align: center;
+            background: rgba(17, 24, 39, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .code {
+            font-size: clamp(4rem, 14vw, 7rem);
+            font-weight: 800;
+            line-height: 1;
+            color: var(--accent);
+            margin: 0 0 1rem;
+            letter-spacing: 0.08em;
+        }
+
+        h1 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+        }
+
+        p {
+            margin: 0.5rem 0;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.9rem 1.3rem;
+            border-radius: 12px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+    </style>
+</head>
+<body>
+    <main class="container" role="main" aria-labelledby="title">
+        <div class="code">500</div>
+        <h1 id="title">Internal Server Error</h1>
+        <p>Something went wrong on the server.</p>
+        <p>Please try again later.</p>
+        <a class="button" href="/">Go to Home</a>
+    </main>
+</body>
+</html>
