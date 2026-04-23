@@ -60,6 +60,8 @@ void Server::setupSockets()
         int port = it->second;
 
         int sock = socket(AF_INET, SOCK_STREAM, 0);
+        //AF_INET specifies that the socket will use the IPv4 protocol, 
+        //SOCK_STREAM indicates that it will be a TCP socket (as opposed to a datagram socket for UDP), and 0 means to use the default protocol for the given socket type (which is TCP for SOCK_STREAM). The return value is a file descriptor for the newly created socket, which can be used in subsequent system calls to configure and manage the socket. If the socket creation fails, it returns -1, which is checked in the code to throw an exception if the socket cannot be created successfully.
         if (sock < 0)
             throw std::runtime_error("Failed to create socket");
 
@@ -77,9 +79,6 @@ void Server::setupSockets()
             }
         }
 
-        // allow this socket to reuse the address/port even if it’s still in TIME_WAIT
-        int opt = 1;
-        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)); // Allow reuse of the address
 
         fcntl(sock, F_SETFL, O_NONBLOCK); // Set the socket to non-blocking mode
 
@@ -316,7 +315,7 @@ void Server::handleRead(int client_fd)
 
     client->buffer.append(buffer, bytes);
 
-    // 🔥 TEMP MOCK: detect end of headers only
+    //  TEMP MOCK: detect end of headers only
     if (client->buffer.find("\r\n\r\n") != std::string::npos)
     {
         processRequest(client_fd);
