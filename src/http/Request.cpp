@@ -5,8 +5,6 @@
 
 #define BUFFER_SIZE 4096
 
-
-
 Request::Request( void )
 {
 	_state = READ_START_LINE;
@@ -42,9 +40,24 @@ const std::string& Request::get_method( void ) const
 	return _method;
 }
 
-void Request::set_server_block(ServerBlock *server_block)
+// void Request::set_server_block(ServerBlock *server_block)
+// {
+// 	_server_block = server_block;
+// }
+
+void Request::set_server_block(std::vector<ServerBlock *> server_blocks)
 {
-	_server_block = server_block;
+	std::string host = _headers->getHeader("host");
+	for (size_t i = 0; i < server_blocks.size(); ++i) {
+		for (size_t j = 0; j < server_blocks[i]->server_names.size(); j++) {
+			if (server_blocks[i]->server_names[j] == host) {
+				_server_block = server_blocks[i];
+				return ;
+			}
+		}
+	}
+
+	throw BadRequestException("No server block found");
 }
 
 ServerBlock *Request::get_server_block( void ) const
