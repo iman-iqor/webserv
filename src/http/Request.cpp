@@ -92,7 +92,7 @@ bool Request::extract_first_line( void )
 	_path = first_line.substr(first_sp + 1, second_sp - first_sp - 1);
 	_http_version = first_line.substr(second_sp + 1);
 
-	if (all_method.find(_method) == std::string::npos || _path.empty() || _http_version != "HTTP/1.1")
+	if (all_method.find(_method) == std::string::npos || _path.empty() || _http_version != "HTTP/1.1" || _http_version != "HTTP/1.0")
 		throw BadRequestException("Invalid request line");
 	
 	_buffer = _buffer.substr(sp_pos + 2);
@@ -119,7 +119,7 @@ bool Request::extract_headers( void )
 			throw NotEmplementedException("Transfer-Encoding not supported");
 		_read_bytes = BUFFER_SIZE;
 	}
-	else if (_headers->hasHeader("content-length")) {
+	else if (_method == "POST") {
 		std::string charset = "0123456789";
 		std::string value = _headers->getHeader("content-length");
 		if (value.empty() || has_other(value, charset))

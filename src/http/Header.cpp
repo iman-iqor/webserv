@@ -50,7 +50,7 @@ std::string &Header::getHeader( const std::string &key )
     std::string lower_key = key;
     to_lower(lower_key);
     if (_headers.find(lower_key) == _headers.end())
-        throw HeaderNotFound();
+        throw BadRequestException("Header Key not found");
     return _headers[lower_key];
 }
 
