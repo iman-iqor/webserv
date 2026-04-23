@@ -40,11 +40,6 @@ const std::string& Request::get_method( void ) const
 	return _method;
 }
 
-// void Request::set_server_block(ServerBlock *server_block)
-// {
-// 	_server_block = server_block;
-// }
-
 void Request::set_server_block(std::vector<ServerBlock *> server_blocks)
 {
 	std::string host = _headers->getHeader("host");
@@ -65,39 +60,10 @@ ServerBlock *Request::get_server_block( void ) const
 	return _server_block;
 }
 
-void Request::read_request( int socket_fd, bool *closed )
-{
-	ssize_t size;
-	char buf[4096];
-
-	if (_state == READ_PLAIN_BODY) {
-		size_t to_read = _content_length - _read_bytes;
-		if (to_read > BUFFER_SIZE - 1)
-			to_read = BUFFER_SIZE - 1;
-		size = recv(socket_fd, buf, sizeof(buf), 0);
-		_read_bytes += size;
-	}
-	else if (_state == READ_CHUNK_BODY) {
-		size = recv(socket_fd, buf, _read_bytes, 0);
-	}
-	else {
-		size = recv(socket_fd, buf, sizeof(buf), 0);
-	}
-	if (size == 0) {
-		*closed = true;
-		return ;
-	}
-	else if (size < 0)
-		throw BadRequestException("Failed to read from socket");
-	buf[size] = 0;
-	std::cout << "Received data:\n" << buf << std::endl;
-	append_to_buffer(buf);
-	_parser();
-}
-
 void Request::append_to_buffer( const char *s )
 {
 	_buffer += s;
+	_parser();
 }
 
 void Request::_parser( void )
@@ -184,25 +150,6 @@ bool Request::extract_plain_body( void )
 	_buffer.clear();
 	return (true);
 }
-
-/**
-	6\r\n
-	Hello \r\n
-	3\r\n
-	42 \r\n
-	8\r\n
-	Network!\r\n
-	0\r\n
-	\r\n
-
-1.	b = "6\r\nHello"	<= pos = 0	|	buffer
-	n =	  1				<= 				del_pos
-
-
-	5\r\nWorld\r\n
-	     .
-	7 - 4 = 3
- */
 
 bool Request::extract_chunked_body( void )
 {
