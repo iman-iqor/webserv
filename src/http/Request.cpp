@@ -183,33 +183,34 @@ bool Request::extract_plain_body( void )
 
 bool Request::extract_chunked_body( void )
 {
-	size_t n = _buffer.find("\r\n", _pos);
-	if (n == std::string::npos) {
-		if (_pos != 0) {
-			_buffer = _buffer.substr(_pos);
-			_pos = 0;
+	while (true) {
+		size_t n = _buffer.find("\r\n", _pos);
+		if (n == std::string::npos) {			// if i can't find the next line SEP, return and wait for more data to arrive
+			if (_pos != 0) { 					// if i have already parsed some chunk, but the next chunk size line is not complete, keep the unprocessed part in the buffer for the next parsing round
+				_buffer = _buffer.substr(_pos);	// keep the unprocessed part of the buffer starting from the current position, which may contain a partial chunk size line or chunk data that has not been fully parsed yet. This allows the parser to continue processing the remaining data when more bytes arrive in subsequent reads.
+				_pos = 0;						// reset the position to the beginning of the new buffer
+			}
+			return (false);
 		}
-		return (false);
+		std::string hex = _buffer.substr(_pos, n - _pos); // find the next chunk size line, which is terminated by "\r\n". The chunk size is represented as a hexadecimal string, so we extract the substring from the current position to the position of the next "\r\n" to get the chunk size in hex format.
+		if (hex.find_first_not_of("0123456789aAbBcCdDeEfF") != std::string::npos)
+			throw BadRequestException("Invalid chunk size: [" + hex + "]");
+		_pos += 2 + hex.size();
+		int chunk_size = std::strtol(hex.c_str(), NULL, 16);
+		if (chunk_size == 0 && _buffer.find("\r\n\r\n", _pos) == std::string::npos) { // if the chunk size is 0, it indicates the last chunk, but we should also make sure that the final "\r\n\r\n" after the last chunk is received to mark the end of the chunked body. If we haven't received the final "\r\n\r\n" yet, we should wait for more data to arrive instead of marking the request as finished.
+			_state = FINISHED;
+			break;
+		}
+		if (_buffer.size() - _pos >= chunk_size) {
+			_body += _buffer.substr(_pos, chunk_size);
+			_pos += chunk_size + 2;
+		}
+		else {
+			_body += _buffer.substr(_pos);
+			chunk_size -= _buffer.size() - _pos;
+			_pos = _buffer.size();
+		}
+		if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
 	}
-	std::string hex = _buffer.substr(_pos, n - _pos);
-	std::string charset = "0123456789aAbBcCdDfFeE";
-	if (has_other(hex, charset))
-		throw BadRequestException("Invalid chunk size: [" + hex + "]");
-	_read_bytes = std::strtol(hex.c_str(), NULL, 16) + 2;
-	_pos += 2 + hex.size();
-	if (_buffer.size() - _pos >= _read_bytes) {
-		_body += _buffer.substr(_pos, _read_bytes);
-		_pos += _read_bytes;
-	}
-	else {
-		_body += _buffer.substr(_pos);
-		_read_bytes -= _buffer.size() - _pos;
-		_pos = _buffer.size();
-	}
-	if (hex == "0") {
-		_state = FINISHED;
-		if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Chunked body completed, bytes=" << _body.size() << std::endl;
-	}
-	if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
 	return (true);
 }
