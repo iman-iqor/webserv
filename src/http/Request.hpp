@@ -42,8 +42,6 @@ public:
 	~Request( void );
     void _parser( void );
 
-	void read_request( int socket_fd, bool *closed );
-    void parse_request( void );
     // void append_to_buffer(const std::string& data);
     void append_to_buffer(const char *s);
 
@@ -53,6 +51,7 @@ public:
 	bool extract_chunked_body( void );
 
     bool is_finished( void );
+	void validate( void );
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
 	void set_server_block(std::vector<ServerBlock *> &server_blocks);
