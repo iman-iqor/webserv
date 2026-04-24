@@ -40,7 +40,7 @@ const std::string& Request::get_method( void ) const
 	return _method;
 }
 
-void Request::set_server_block(std::vector<ServerBlock *> server_blocks)
+void Request::set_server_block(std::vector<ServerBlock *> &server_blocks)
 {
 	std::string host = _headers->getHeader("host");
 	for (size_t i = 0; i < server_blocks.size(); ++i) {
