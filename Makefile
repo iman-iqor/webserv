@@ -1,17 +1,12 @@
-# ===================== #
-#       VARIABLES       #
-# ===================== #
+
 
 NAME = webserv
-MOCK_NAME = webserv_mock
 
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-MAIN = src/main.cpp
-MAIN_MOCK = src/main_mock.cpp
-
 SRC = \
+	main.cpp \
 	src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
 	src/http/Header.cpp \
@@ -24,36 +19,23 @@ SRC = \
 	src/utils/request_utils.cpp
 
 OBJ = $(SRC:.cpp=.o)
-MAIN_OBJ = $(MAIN:.cpp=.o)
-MAIN_MOCK_OBJ = $(MAIN_MOCK:.cpp=.o)
 
-# ===================== #
-#         RULES         #
-# ===================== #
 
 all: $(NAME)
 
-mock: $(MOCK_NAME)
-
-$(NAME): $(OBJ) $(MAIN_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $(NAME)
-
-$(MOCK_NAME): $(OBJ) $(MAIN_MOCK_OBJ)
-	$(CXX) $(CXXFLAGS) $^ -o $(MOCK_NAME)
+$(NAME): $(OBJ)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(MAIN_OBJ) $(MAIN_MOCK_OBJ)
+	rm -f $(OBJ)
 
 fclean: clean
-	rm -f $(NAME) $(MOCK_NAME)
+	rm -f $(NAME)
 
 re: fclean all
 
-# ===================== #
-#       PHONY           #
-# ===================== #
 
-.PHONY: all mock clean fclean re
+.PHONY: all clean fclean re
