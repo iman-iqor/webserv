@@ -179,14 +179,10 @@ void Server::acceptClient(int listen_fd)
     int client_fd = accept(listen_fd, NULL, NULL); // Accept a new incoming connection on the listening socket, which returns a new file descriptor for the client socket. The client's address information is not needed in this case, so NULL is passed for the address and its length.
     
     if (client_fd < 0) {
-        // ✅ Check error reason
-        if (errno == EMFILE || errno == ENFILE) {
-            std::cerr << "Too many open files - rejecting connection" << std::endl;
-        }
+        
         return;
     }
 
-    fcntl(client_fd, F_SETFL, O_NONBLOCK); // Set the client socket to non-blocking mode, allowing for asynchronous I/O operations without blocking the server's main loop without it the server would block on read/write operations, preventing it from handling other clients or accepting new connections until the current operation completes.
 
     struct epoll_event event;
     event.events = EPOLLIN;
@@ -199,8 +195,9 @@ void Server::acceptClient(int listen_fd)
         throw std::runtime_error("epoll_ctl client add failed");
     }
 
-    clients[client_fd] = new Client(client_fd);
-
+    clients[client_fd] = new Client(client_fd);// Create a new Client object for the accepted client connection and store it in the clients map using the client file descriptor as the key, allowing the server to manage and track the state of each connected client separately.
+    clients[client_fd]->listen_fd = listen_fd; // Store the listening socket file descriptor that accepted this client in the Client object for later reference, which can be useful for determining which server block to use when processing requests from this client based on the listening socket it connected to.
+   
     std::cout << "New client connected: " << client_fd << std::endl;
 }
 

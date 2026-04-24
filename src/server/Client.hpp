@@ -26,7 +26,8 @@ public:
     std::string buffer;   // incoming request
     std::string response; // outgoing response
 
-
+    int listen_fd;// file descriptor for the listening socket that accepted this client
+    Request request;
     bool request_complete;
     bool ready_to_send;
 
