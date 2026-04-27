@@ -16,6 +16,8 @@
 #include <algorithm>
 #include "../http/Request.hpp"
 #include<set>
+#include <cstring> // for memset
+
 extern bool g_shutdown ; // Global flag to signal shutdown across the server, allowing for graceful termination of the main loop and cleanup of resources when a shutdown signal is received (e.g., SIGINT or SIGTERM)
 
 #include "../config/Config.hpp"

@@ -25,6 +25,7 @@ public:
 
     std::string buffer;   // incoming request
     std::string response; // outgoing response
+    int expected_body_size; // expected size of the request body, used for tracking how much of the body has been received so far
 
     int listen_fd;// file descriptor for the listening socket that accepted this client
     Request request;

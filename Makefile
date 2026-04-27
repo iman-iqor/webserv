@@ -13,6 +13,8 @@ SRC = \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
 	src/server/Server.cpp \
+	src/server/AcceptClient.cpp \
+	src/server/HandleClient.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
 	src/utils/string_utils.cpp \
