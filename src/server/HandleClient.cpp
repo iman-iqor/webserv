@@ -63,24 +63,25 @@ void Server::handleWrite(int client_fd)
 }
 void Server::handleRead(int client_fd)
 {
-    Client *client = clients[client_fd];
-    char buffer[4096];
-    int bytes = recv(client_fd, buffer, sizeof(buffer), 0);
+	Client *client = clients[client_fd];
+	char buffer[4096];
+	int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    if (bytes <= 0)
-    {
-        closeClient(client_fd);
-        return;
-    }
+	if (bytes > 0)
+	{
+		buffer[bytes] = '\0'; // Null-terminate the buffer to safely convert it to a string
+		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
+	}
+	else if (bytes == 0)
+		client->request.validate();
+	else
+	{
+	   closeClient(client_fd);
+		return ;
+	}
 
-    client->buffer.append(buffer, bytes);
-
-    //  TEMP MOCK: detect end of headers only
-    if (client->buffer.find("\r\n\r\n") != std::string::npos)
-    {
-        processRequest(client_fd);
-        client->buffer.clear();
-    }
+	if (client->request.is_finished())
+		processRequest(client_fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
 }
 
 void Server::processRequest(int client_fd)
