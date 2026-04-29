@@ -5,7 +5,6 @@
 
 std::string readfile(std::string filename)
 {
-
     std::ifstream file(filename.c_str());
     if(!file.is_open())
         throw std::runtime_error("can not open file");
@@ -80,3 +79,4 @@ std::vector<Token> tokenize(std::string &content)
     } 
     return tokens;
 }
+

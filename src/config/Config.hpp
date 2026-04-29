@@ -33,7 +33,7 @@ struct Location {
 };
 
 struct ServerBlock {
-    std::vector< std::pair<std::string, int> > listen_directives;
+    std::vector<std::pair<std::string, int> > listen_directives;
     std::vector<std::string> server_names;
     long client_max_body_size;
     std::map<int, std::string> error_pages;

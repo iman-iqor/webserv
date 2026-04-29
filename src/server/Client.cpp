@@ -6,8 +6,8 @@ Client::Client(int fd)
     ready_to_send = false;
     request = Request();
     listen_fd = -1;
-    client_ip = "";
-    client_port = -1;
+    // client_ip = "";
+    // client_port = -1;
 }
 
 Client::~Client() {

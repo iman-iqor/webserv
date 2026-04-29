@@ -19,6 +19,7 @@ class Parser
         void parseListenDirective(ServerBlock &server);
         long parseSize(std::string &str);
         void parseErrorPages(ServerBlock &server);
+        void validMethod(std::string &str, Location &loc);
     public:
         Parser(std::string filename);
         Config parse();
