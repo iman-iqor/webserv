@@ -201,7 +201,7 @@ bool Request::extract_chunked_body( void )
 			_state = FINISHED;
 			break;
 		}
-		if (_buffer.size() - _pos >= chunk_size) {
+		if (_buffer.size() - _pos >= (size_t)chunk_size) {
 			_body += _buffer.substr(_pos, chunk_size);
 			_pos += chunk_size + 2;
 		}

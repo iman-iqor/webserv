@@ -10,7 +10,7 @@ Server::Server(Config &config)
 // Server.cpp
 Server::~Server()
 {
-	// ✅ Close all client connections
+	// Close all client connections
 	for (std::map<int, Client *>::iterator it = clients.begin();
 		 it != clients.end(); ++it)
 	{
@@ -20,7 +20,7 @@ Server::~Server()
 	}
 	clients.clear();
 
-	// ✅ Remove all listen sockets from epoll
+	// Remove all listen sockets from epoll
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
 		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, listen_fds[i], NULL);
@@ -28,7 +28,7 @@ Server::~Server()
 	}
 	listen_fds.clear();
 
-	// ✅ Close epoll
+	
 	if (epoll_fd != -1)
 	{
 		close(epoll_fd);
