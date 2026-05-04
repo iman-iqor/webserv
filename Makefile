@@ -16,6 +16,7 @@ SRC = \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
 	src/utils/string_utils.cpp \
+	src/utils/location_tool.cpp \
 	src/utils/request_utils.cpp
 
 OBJ = $(SRC:.cpp=.o)

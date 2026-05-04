@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <sys/socket.h>
+#include <algorithm>
 
 #define BUFFER_SIZE 4096
 
@@ -18,6 +19,7 @@ Request::Request( void )
 	_headers = NULL;
 	_pos = 0;
 	_content_length = 0;
+	_location = NULL;
 	_read_bytes = 0;
 	_parse[READ_START_LINE] = &Request::extract_first_line;
 	_parse[READ_HEADERS] = &Request::extract_headers;
@@ -46,16 +48,17 @@ const std::string& Request::get_method( void ) const
 	return _method;
 }
 
-void Request::set_server_block(std::vector<ServerBlock *> &server_blocks)
+void Request::set_server_block(std::vector<ServerBlock *> *server_blocks)
 {
+	(void) server_blocks;
 	std::string host = _headers->getHeader("host");
 	if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Looking for server block host=" << host << std::endl;
-	for (size_t i = 0; i < server_blocks.size(); ++i) {
-		std::vector<std::string> &names = server_blocks[i]->server_names;
+	for (size_t i = 0; i < sv_blocks->size(); ++i) {
+		std::vector<std::string> &names = (*sv_blocks)[i]->server_names;
 		for (size_t j = 0; j < names.size(); j++) {
 			if (names[j] == host) {
 				if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Server block found: " << GREEN << host << RESET << std::endl;
-				_server_block = server_blocks[i];
+				_server_block = (*sv_blocks)[i];
 				return ;
 			}
 		}
@@ -153,7 +156,29 @@ bool Request::extract_headers( void )
 	_buffer = _buffer.substr(_pos);
 	_pos = 0;
 
+	set_server_block(sv_blocks);
+	pre_validate();
+
 	return (true);
+}
+
+bool Request::is_method_supported(const std::string& method) const
+{
+	return (std::find(_location->methods.begin(), _location->methods.end(), method) != _location->methods.end());
+}
+
+void Request::pre_validate( void )
+{
+	_location = find_location(_server_block, _path);
+	if (_location == NULL)
+		throw NotFoundException("No matching location found for path: " + _path);
+	if (!is_method_supported(_method))
+		throw MethodNotAllowedException("Method not supported: " + _method);
+}
+
+RequestState Request::get_state( void ) const
+{
+	return _state;
 }
 
 void Request::validate( void )
@@ -196,7 +221,7 @@ bool Request::extract_chunked_body( void )
 		if (hex.find_first_not_of("0123456789aAbBcCdDeEfF") != std::string::npos)
 			throw BadRequestException("Invalid chunk size: [" + hex + "]");
 		_pos += 2 + hex.size();
-		int chunk_size = std::strtol(hex.c_str(), NULL, 16);
+		unsigned int chunk_size = std::strtol(hex.c_str(), NULL, 16);
 		if (chunk_size == 0 && _buffer.find("\r\n\r\n", _pos) == std::string::npos) { // if the chunk size is 0, it indicates the last chunk, but we should also make sure that the final "\r\n\r\n" after the last chunk is received to mark the end of the chunked body. If we haven't received the final "\r\n\r\n" yet, we should wait for more data to arrive instead of marking the request as finished.
 			_state = FINISHED;
 			break;
