@@ -111,4 +111,15 @@ public:
     }
 };
 
+class LengthRequiredException : public std::exception {
+    std::string _message;
+public:
+    LengthRequiredException(std::string message = "Length Required") : _message(message) {}
+    ~LengthRequiredException() throw() {}
+    
+    virtual const char* what() const throw() {
+        return _message.c_str();
+    }
+};
+
 #endif // EXCEPTIONS_HPP
