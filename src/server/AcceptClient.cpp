@@ -21,8 +21,7 @@ void Server::acceptClient(int listen_fd)
         throw std::runtime_error("epoll_ctl client add failed");
     }
 
-    clients[client_fd] = new Client(client_fd);// Create a new Client object for the accepted client connection and store it in the clients map using the client file descriptor as the key, allowing the server to manage and track the state of each connected client separately.
-    clients[client_fd]->listen_fd = listen_fd; // Store the listening socket file descriptor that accepted this client in the Client object for later reference, which can be useful for determining which server block to use when processing requests from this client based on the listening socket it connected to.
+    clients[client_fd] = new Client(listen_fd, client_fd, &fd_to_servers[listen_fd]);// Create a new Client object for the accepted client connection and store it in the clients map using the client file descriptor as the key, allowing the server to manage and track the state of each connected client separately.
    
     std::cout << "New client connected: " << client_fd << std::endl;
 }
