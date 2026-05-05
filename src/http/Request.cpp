@@ -89,7 +89,6 @@ void Request::_parser( void )
 
 bool Request::extract_first_line( void )
 {
-	std::string all_method = "GETPOSTDELETE";
 	size_t sp_pos = _buffer.find("\r\n");
 	if (sp_pos == std::string::npos)
 		return false;
@@ -106,7 +105,7 @@ bool Request::extract_first_line( void )
 	_http_version = first_line.substr(second_sp + 1);
 	if (VERBOS) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Start line => method=" << _method << " path=" << _path << " version=" << _http_version << std::endl;
 
-	if (all_method.find(_method) == std::string::npos || _path.empty() || (_http_version != "HTTP/1.1" && _http_version != "HTTP/1.0"))
+	if (!method_is_valid(_method) || _path.empty() || (_http_version != "HTTP/1.1" && _http_version != "HTTP/1.0"))
 		throw BadRequestException("Invalid request line");
 	
 	_buffer = _buffer.substr(sp_pos + 2);
