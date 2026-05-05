@@ -1,1 +1,4 @@
 //you can add here the files and folders you want to ignore 
+*.out
+.vscode/
+*.o

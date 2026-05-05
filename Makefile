@@ -1,6 +1,4 @@
-# ===================== #
-#       VARIABLES       #
-# ===================== #
+
 
 NAME = webserv
 
@@ -8,20 +6,21 @@ CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRC = \
-	src/main.cpp \
+	main.cpp \
 	src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
+	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
 	src/server/Server.cpp \
 	src/server/Client.cpp \
-	src/server/Socket.cpp
+	src/server/Socket.cpp \
+	src/utils/string_utils.cpp \
+	src/utils/location_tool.cpp \
+	src/utils/request_utils.cpp
 
 OBJ = $(SRC:.cpp=.o)
 
-# ===================== #
-#         RULES         #
-# ===================== #
 
 all: $(NAME)
 
@@ -39,8 +38,5 @@ fclean: clean
 
 re: fclean all
 
-# ===================== #
-#       PHONY           #
-# ===================== #
 
 .PHONY: all clean fclean re
