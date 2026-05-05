@@ -32,7 +32,7 @@ public:
     bool request_complete;
     bool ready_to_send;
 
-    Client(int fd);
+    Client(int listen_fd, int client_fd, std::vector< ServerBlock* > *sv_block);
     ~Client();
 };
 #endif // CLIENT_HPP
