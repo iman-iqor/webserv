@@ -124,6 +124,9 @@ bool Request::extract_headers( void )
 
 	std::string header_str = _buffer.substr(_pos, sp_pos - _pos);
 	_headers = new Header(header_str);
+
+	// TODO: pre validate the Routing HERE <<<<<<<<
+
 	if (VERBOS) std::cout << BOLD_MAGENTA << "[REQUEST]" << RESET << " Headers parsed successfully" << std::endl;
 	_pos = sp_pos + 4;
 	if (_headers->hasHeader("transfer-encoding")) {
@@ -136,7 +139,7 @@ bool Request::extract_headers( void )
 		_read_bytes = BUFFER_SIZE;
 		if (VERBOS) std::cout << MAGENTA << "[REQUEST]" << RESET << " Using chunked body parser" << std::endl;
 	}
-	else if (_method == "POST") {
+	else if (_headers->hasHeader("content-length")) {
 		std::string charset = "0123456789";
 		std::string value = _headers->getHeader("content-length");
 		if (value.empty() || has_other(value, charset))
@@ -149,6 +152,8 @@ bool Request::extract_headers( void )
 			_state = READ_PLAIN_BODY;
 		if (VERBOS) std::cout << MAGENTA << "[REQUEST]" << RESET << " Content-Length=" << _content_length << std::endl;
 	}
+	else if (_method == "POST")
+		throw LengthRequiredException("POST request missing Content-Length header");
 	else
 		_state = FINISHED;
 	if (VERBOS && _state == FINISHED) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request completed after headers" << std::endl;
