@@ -126,6 +126,9 @@ bool Request::extract_headers( void )
 	_headers = new Header(header_str);
 
 	// TODO: pre validate the Routing HERE <<<<<<<<
+	// in here we will implement the Routing logic
+	// which is to find the matching server block and location block for the request path
+	// and also to check if the request method is supported by the location block.
 
 	if (VERBOS) std::cout << BOLD_MAGENTA << "[REQUEST]" << RESET << " Headers parsed successfully" << std::endl;
 	_pos = sp_pos + 4;
