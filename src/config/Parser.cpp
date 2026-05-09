@@ -290,6 +290,7 @@ void Parser::parseLocation(ServerBlock &server)
 
     server.locations.push_back(loc);
 }
+
 Parser::Parser(std::string filename)
 {
     this->i = 0;
