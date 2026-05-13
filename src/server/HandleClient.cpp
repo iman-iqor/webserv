@@ -73,15 +73,16 @@ void Server::handleRead(int client_fd)
 		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
 	}
 	else if (bytes == 0)
-		client->request.validate();
+		client->request.finish_reading(); // Mark the request as finished if the client has closed the connection, which allows the server to process the request with whatever data has been received so far without waiting for more data that will never arrive.
 	else
 	{
 	   closeClient(client_fd);
 		return ;
 	}
-
 	if (client->request.is_finished())
 		processRequest(client_fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
+    else if (client->request.is_finished_reading())
+        throw BadRequestException("Request is finished reading but not fully parsed");
 }
 
 void Server::processRequest(int client_fd)
