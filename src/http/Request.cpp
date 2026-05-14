@@ -7,7 +7,7 @@
 #define BUFFER_SIZE 4096
 
 #ifndef VERBOS
-# define VERBOS true
+# define VERBOS false
 #endif
 
 Request::Request( void )
@@ -105,7 +105,9 @@ bool Request::extract_first_line( void )
 	_http_version = first_line.substr(second_sp + 1);
 	if (VERBOS) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Start line => method=" << _method << " path=" << _path << " version=" << _http_version << std::endl;
 
-	if (!method_is_valid(_method) || _path.empty() || (_http_version != "HTTP/1.1" && _http_version != "HTTP/1.0"))
+	if (!method_is_valid(_method))
+		throw NotImplementedException("Unsupported HTTP method: " + _method);
+	if (_path.empty() || (_http_version != "HTTP/1.1" && _http_version != "HTTP/1.0"))
 		throw BadRequestException("Invalid request line");
 	
 	_buffer = _buffer.substr(sp_pos + 2);
@@ -137,7 +139,7 @@ bool Request::extract_headers( void )
 		if (value == "chunked")
 			_state = READ_CHUNK_BODY;
 		else
-			throw NotEmplementedException("Transfer-Encoding not supported");
+			throw NotImplementedException("Transfer-Encoding not supported");
 		_read_bytes = BUFFER_SIZE;
 		if (VERBOS) std::cout << MAGENTA << "[REQUEST]" << RESET << " Using chunked body parser" << std::endl;
 	}

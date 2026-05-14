@@ -1,7 +1,7 @@
 #include "Header.hpp"
 
 #ifndef VERBOS
-# define VERBOS true
+# define VERBOS false
 #endif
 
 /**
@@ -45,7 +45,7 @@ Header::~Header( void )
 void Header::validate_headers( void )
 {
     if (_headers.empty() || _headers.find("host") == _headers.end())
-        throw BadRequestException();
+        throw BadRequestException("Missing required Host header");
     if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Required headers are present" << std::endl;
 }
 
@@ -54,7 +54,7 @@ std::string &Header::getHeader( const std::string &key )
     std::string lower_key = key;
     to_lower(lower_key);
     if (_headers.find(lower_key) == _headers.end())
-        throw BadRequestException(std::string("Header not found: ") + key);
+        throw BadRequestException("Header not found: " + key);
     return _headers[lower_key];
 }
 
@@ -106,22 +106,22 @@ void Header::_header_pair_parser( const std::string &s, char del)
 {
     size_t pos = s.find(del);
     if (pos == std::string::npos) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid header format");
     }
 
     std::string key = s.substr(0, pos);
     to_lower(key);
     if (key.empty() || !is_valid_key(key)
         || (key == "host" && _headers.find("host") != _headers.end())) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid header format");
     }
 
     std::string value = trim(s.substr(pos + 1));
     if (key == "host" && (value.empty() || has_any(value, " \t\r\n"))) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid Host header value");
     }
     else if (has_any(value, "\r\n")) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid header value");
     }
     
     if (key == "cookie") {
@@ -153,12 +153,12 @@ void Header::_cookies_parser( const std::string &s )
 
         cookie = trim(str.substr(pos_a, pos_b - pos_a));
         if (cookie.empty()) {
-            throw BadRequestException();
+            throw BadRequestException("Invalid cookie format");
         }
         _cookie_pair_parser(cookie, '=');
 
         if (pos_b == str.length() - 1) {
-            throw BadRequestException();
+            throw BadRequestException("Invalid cookie format");
         }
 
         if (pos_b == str.length())
@@ -175,19 +175,19 @@ void Header::_cookie_pair_parser( const std::string &s, char del)
 {
     size_t pos = s.find(del);
     if (pos == std::string::npos) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid cookie format");
     }
 
     std::string key = trim(s.substr(0, pos));
     if (key.empty() || !is_valid_key(key)) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid cookie format");
     }
     std::string value = trim(s.substr(pos + 1));
     if (value.at(0) == '"' && value.at(value.length() - 1) == '"') {
         value = value.substr(1, value.length() - 2);
     }
     if (!is_valid_cookie_value(value)) {
-        throw BadRequestException();
+        throw BadRequestException("Invalid cookie format");
     }
     
     if (_cookies.find(key) == _cookies.end()) {
