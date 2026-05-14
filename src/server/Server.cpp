@@ -79,8 +79,9 @@ void Server::start()
 			}
 			catch (const BadRequestException &e)
 			{
+				std::string res = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n"; // Prepare a simple HTTP 400 Bad Request response to send back to the client when a bad request is encountered
 				std::cerr << "Bad request: " << e.what() << std::endl;
-				send(events[i].data.fd, "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n", 44, 0); // Send a simple HTTP 400 Bad Request response to the client to inform them of the issue with their request before closing the connection
+				send(events[i].data.fd, res.c_str(), res.length(), 0); // Send a simple HTTP 400 Bad Request response to the client to inform them of the issue with their request before closing the connection
 				closeClient(events[i].data.fd); // Close the client connection if a bad request is encountered to free up resources and prevent further issues with that client
 			}
 			catch(const std::exception &e)

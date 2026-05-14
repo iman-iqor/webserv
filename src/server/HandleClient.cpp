@@ -78,16 +78,15 @@ void Server::handleRead(Client *client)
 		buffer[bytes] = '\0'; // Null-terminate the buffer to safely convert it to a string
 		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
 	}
-	else if (bytes == 0)//this means the client has closed the connection, so the server should close the client connection to free up resources and prevent further attempts to read from a client that is no longer connected.
-		client->request.validate();// Validate the request once the client has finished sending data (indicated by recv returning 0), which may involve checking the completeness and correctness of the request before processing it further. If the request is valid, the server can proceed to generate a response based on the request data.
 	else
 	{
 	   closeClient(client->fd);
+       //cleanup and close connection if recv returns 0 (client closed connection) or -1 (error)
 		return ;
 	}
-
 	if (client->request.is_finished())
 		processRequest(client->fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
+    
 }
 
 void Server::processRequest(int client_fd)

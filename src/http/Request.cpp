@@ -188,14 +188,14 @@ RequestState Request::get_state( void ) const
 	return _state;
 }
 
-void Request::validate( void )
-{
-	if (_state != FINISHED)
-		throw BadRequestException("Request is not fully parsed");
-	if (_body.size() != _content_length)
-		throw BadRequestException("Body size does not match Content-Length");
-	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request validation successful" << std::endl;
-}
+// void Request::validate( void )
+// {
+// 	if (_state != FINISHED)
+// 		throw BadRequestException("Request is not fully parsed");
+// 	if (_body.size() != _content_length)
+// 		throw BadRequestException("Body size does not match Content-Length");
+// 	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request validation successful" << std::endl;
+// }
 
 bool Request::extract_plain_body( void )
 {

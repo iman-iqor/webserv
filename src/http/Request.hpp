@@ -65,7 +65,6 @@ public:
 	bool is_method_supported(const std::string& method) const;
 
 	RequestState get_state( void ) const ;
-
 };
 
 #endif // REQUEST_HPP
