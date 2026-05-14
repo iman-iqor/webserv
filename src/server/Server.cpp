@@ -54,6 +54,18 @@ void Server::initEpoll()
 			throw std::runtime_error("epoll_ctl ADD failed");
 	}
 }
+
+void handleClientError(Client *client, const HttpException &e)
+{
+    if (!client)
+        return;
+    std::ostringstream oss;
+    oss << "HTTP/1.1 " << e.statusCode << " " << e.statusMessage << "\r\nContent-Length: 0\r\n\r\n";
+    std::string res = oss.str();
+    std::cerr << RED << "[" << e.statusMessage << "] " << RESET << e.what() << std::endl;
+    send(client->fd, res.c_str(), res.length(), 0);
+}
+
 void Server::start()
 {
 	struct epoll_event events[1024]; // Array to hold events returned by epoll_wait
@@ -73,13 +85,17 @@ void Server::start()
 			{
 				handleEvent(events[i]); // Handle each event returned by epoll_wait, which could be a new incoming connection or activity on an existing client socket
 			}
-			catch (const BadRequestException &e)
+			catch (const HttpException &e)
 			{
-				std::string res = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n"; // Prepare a simple HTTP 400 Bad Request response to send back to the client when a bad request is encountered
-				std::cerr << "Bad request: " << e.what() << std::endl;
-				send(events[i].data.fd, res.c_str(), res.length(), 0); // Send a simple HTTP 400 Bad Request response to the client to inform them of the issue with their request before closing the connection
-				closeClient(events[i].data.fd); // Close the client connection if a bad request is encountered to free up resources and prevent further issues with that client
+				handleClientError(clients[events[i].data.fd], e); // Handle HTTP exceptions that may occur during event processing, such as bad requests or internal server errors, by sending appropriate HTTP responses to the client and closing the connection if necessary
 			}
+			// catch (const BadRequestException &e)
+			// {
+			// 	std::string res = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n"; // Prepare a simple HTTP 400 Bad Request response to send back to the client when a bad request is encountered
+			// 	std::cerr << "Bad request: " << e.what() << std::endl;
+			// 	send(events[i].data.fd, res.c_str(), res.length(), 0); // Send a simple HTTP 400 Bad Request response to the client to inform them of the issue with their request before closing the connection
+			// 	closeClient(events[i].data.fd); // Close the client connection if a bad request is encountered to free up resources and prevent further issues with that client
+			// }
 			catch(const std::exception &e)
 			{
 				std::cerr << "Error handling event: " << e.what() << std::endl;
