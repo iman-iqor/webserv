@@ -3,123 +3,73 @@
 
 #include <exception>
 
-/**
- * ** 400 Bad Request: **
- * * Request line: *
- * Invalid method
- * Invalid URI
- * Invalid HTTP version
- * Missing spaces in request first line
- * 
- * * Headers: *
- * Missing Host header
- * Invalid header format
- * Header name with spaces
- * Multiple conflicting headers (e.g., multiple Content-Length headers with different values)
- * Transfer-Encoding not supported
- * 
- * ** body: **
- * Request body larger or smaller  than Content-Length
- * Request body in GET request
- * 
- */
-class BadRequestException : public std::exception {
-    std::string _message;
+class HttpException : public std::exception {
 public:
-    BadRequestException(std::string message = "Bad Request") : _message(message) {}
-    ~BadRequestException() throw() {}
+    int         statusCode;
+    std::string message;
+    std::string statusMessage;
 
-    virtual const char* what() const throw() {
-        return _message.c_str();
+    HttpException(int code, const std::string& msg, const std::string& statusMsg)
+        : statusCode(code), message(msg), statusMessage(statusMsg) {}
+    ~HttpException() throw() {}
+
+    const char* what() const throw() {
+        return message.c_str();
     }
 };
 
-class NotEmplementedException : public std::exception {
-    std::string _message;
-public:
-    NotEmplementedException(std::string message = "Not Implemented") : _message(message) {}
-    ~NotEmplementedException() throw() {}
+/* 4xx */
 
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class BadRequestException : public HttpException {
+public:    BadRequestException(const std::string& msg = "Bad Request")
+        : HttpException(400, msg, "Bad Request") {}
 };
 
-class NotFoundException : public std::exception {
-    std::string _message;
-public:
-    NotFoundException(std::string message = "Not Found") : _message(message) {}
-    ~NotFoundException() throw() {}
-
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class ForbiddenException : public HttpException {
+public:    ForbiddenException(const std::string& msg = "Forbidden")
+        : HttpException(403, msg, "Forbidden") {}
 };
 
-class MethodNotAllowedException : public std::exception {
-    std::string _message;
-public:
-    MethodNotAllowedException(std::string message = "Method Not Allowed") : _message(message) {}
-    ~MethodNotAllowedException() throw() {}
-
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class NotFoundException : public HttpException {
+public:    NotFoundException(const std::string& msg = "Not Found")
+        : HttpException(404, msg, "Not Found") {}
 };
 
-class InternalServerErrorException : public std::exception {
-    std::string _message;
-public:
-    InternalServerErrorException(std::string message = "Internal Server Error") : _message(message) {}
-    ~InternalServerErrorException() throw() {}
-
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class MethodNotAllowedException : public HttpException {
+public:    MethodNotAllowedException(const std::string& msg = "Method Not Allowed")
+        : HttpException(405, msg, "Method Not Allowed") {}
 };
 
-class ForbiddenException : public std::exception {
-    std::string _message;
-public:
-    ForbiddenException(std::string message = "Forbidden") : _message(message) {}
-    ~ForbiddenException() throw() {}
-
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class LengthRequiredException : public HttpException {
+public:    LengthRequiredException(const std::string& msg = "Length Required")
+        : HttpException(411, msg, "Length Required") {}
 };
 
-class RedirectException : public std::exception {
-    std::string _message;
-public:
-    RedirectException(std::string message = "Moved Permanently") : _message(message) {}
-    ~RedirectException() throw() {}
-
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class PayloadTooLargeException : public HttpException {
+public:    PayloadTooLargeException(const std::string& msg = "Payload Too Large")
+        : HttpException(413, msg, "Payload Too Large") {}
 };
 
-class ServerException : public std::exception {
-    std::string _message;
-public:
-    ServerException(std::string message = "Server Error") : _message(message) {}
-    ~ServerException() throw() {}
-    
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+class UnsupportedMediaTypeException : public HttpException {
+public:    UnsupportedMediaTypeException(const std::string& msg = "Unsupported Media Type")
+        : HttpException(415, msg, "Unsupported Media Type") {}
 };
 
-class LengthRequiredException : public std::exception {
-    std::string _message;
-public:
-    LengthRequiredException(std::string message = "Length Required") : _message(message) {}
-    ~LengthRequiredException() throw() {}
-    
-    virtual const char* what() const throw() {
-        return _message.c_str();
-    }
+/* 5xx */
+
+class InternalServerErrorException : public HttpException {
+public:    InternalServerErrorException(const std::string& msg = "Internal Server Error")
+        : HttpException(500, msg, "Internal Server Error") {}
+};
+
+class NotImplementedException : public HttpException {
+public:    NotImplementedException(const std::string& msg = "Not Implemented")
+        : HttpException(501, msg, "Not Implemented") {}
+};
+
+class BadGatewayException : public HttpException {
+public:    BadGatewayException(const std::string& msg = "Bad Gateway")
+        : HttpException(502, msg, "Bad Gateway") {}
 };
 
 #endif // EXCEPTIONS_HPP
