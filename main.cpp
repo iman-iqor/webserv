@@ -8,15 +8,17 @@
 #include"src/http/Response.hpp"
 #include <signal.h>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
 #include <csignal>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
+#include <unistd.h>
 
 // ✅ Global flag for signal handling
-bool g_shutdown = false; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit gracefully and perform necessary cleanup before terminating the process.
+volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit gracefully and perform necessary cleanup before terminating the process.
 
 // ✅ Signal handler
 void signalHandler(int signum) {
     (void)signum;  // Avoid unused parameter warning
-    std::cout << "\nReceived interrupt signal. Shutting down..." << std::endl;
-    g_shutdown = true;
+    if (!g_shutdown)
+        write(STDERR_FILENO, "\nReceived interrupt signal. Shutting down...\n", 46);
+    g_shutdown = 1;
 }
 
 int main(int argc,char** argv)
@@ -35,8 +37,8 @@ int main(int argc,char** argv)
     }
     try
     {
-        signal(SIGINT, signalHandler);   // Ctrl+C
-        signal(SIGTERM, signalHandler);  // this is when the process receives a termination signal, allowing for graceful shutdown in various scenarios (e.g., system shutdown, kill command)
+        std::signal(SIGINT, signalHandler);   // Ctrl+C
+        std::signal(SIGTERM, signalHandler);  // this is when the process receives a termination signal, allowing for graceful shutdown in various scenarios (e.g., system shutdown, kill command)
         //oumaima
         Parser parser(configPath);
         Config config = parser.parse();

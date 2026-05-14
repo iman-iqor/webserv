@@ -65,7 +65,8 @@ void Server::setupSockets()
 
         // binding means associating the socket with a specific IP address and port number on the local machine
         if (bind(sock, (sockaddr *)&addr, sizeof(addr)) < 0)
-            throw std::runtime_error("Failed to bind socket to address");
+            throw
+                std::runtime_error("bind failed on " + ip + ":" + std::string("bind failed: ") + strerror(errno));
 
 
         // Start listening for incoming connections on the socket with a backlog of SOMAXCONN (maximum allowed by the system)
