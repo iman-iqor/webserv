@@ -100,7 +100,7 @@ void Server::handleEvent(struct epoll_event &event)
 	if (data->type == SERVER) // Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
 		acceptClient(fd);
 	else
-		handleClient(fd, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
+		handleClient(data, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
 }
 
 

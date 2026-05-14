@@ -1,7 +1,8 @@
 #include"Server.hpp"
 
-void Server::handleClient(int client_fd, uint32_t events)
+void Server::handleClient(EpollData* data, uint32_t events)
 {
+    int client_fd = data->fd;
     // ✅ Check for errors first
     if (events & EPOLLERR)
     {
@@ -17,20 +18,20 @@ void Server::handleClient(int client_fd, uint32_t events)
         return;
     }
     if (events & EPOLLIN)
-        handleRead(client_fd);
+        handleRead(data->client);
     else if (events & EPOLLOUT)
-        handleWrite(client_fd);
+        handleWrite(data->client);
 }
-void Server::handleWrite(int client_fd)
+void Server::handleWrite(Client *client)
 {
-    Client *client = clients[client_fd];
+    // Client *client = clients[client_fd];
 
     if (client->response.empty()) {
-        closeClient(client_fd);
+        closeClient(client->fd);
         return;
     }
 
-    int sent = send(client_fd,//send is a system call used to send data over a socket. It takes the client file descriptor, a pointer to the data to be sent (in this case, the response string), the length of the data, and flags (set to 0 for default behavior). The return value indicates how many bytes were actually sent, which may be less than the total length of the response if the client's receive buffer is full or if an error occurs.
+    int sent = send(client->fd,//send is a system call used to send data over a socket. It takes the client file descriptor, a pointer to the data to be sent (in this case, the response string), the length of the data, and flags (set to 0 for default behavior). The return value indicates how many bytes were actually sent, which may be less than the total length of the response if the client's receive buffer is full or if an error occurs.
                     client->response.c_str(),
                     client->response.size(),
                     0);
@@ -41,7 +42,7 @@ void Server::handleWrite(int client_fd)
         {
             return;  // ✅ Try again next time
         }
-        closeClient(client_fd);
+        closeClient(client->fd);
         return;
     }
 
@@ -51,26 +52,26 @@ void Server::handleWrite(int client_fd)
         
         if (client->response.empty()) {
             // ✅ All sent, close client
-            closeClient(client_fd);
+            closeClient(client->fd);
         } else {
             // ✅ More to send, keep in EPOLLOUT mode
             struct epoll_event event;
             event.events = EPOLLOUT;
             EpollData* data = new EpollData;
-            data->fd = client_fd;
+            data->fd = client->fd;
             data->type = CLIENT;
             data->client = client;
             event.data.ptr = data;
-            epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
+            epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
         }
     }
 }
 
-void Server::handleRead(int client_fd)
+void Server::handleRead(Client *client)
 {
-	Client *client = clients[client_fd];
+	// Client *client = clients[client_fd];
 	char buffer[4096];
-	int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	int bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
 
 	if (bytes > 0)
 	{
@@ -81,12 +82,12 @@ void Server::handleRead(int client_fd)
 		client->request.validate();// Validate the request once the client has finished sending data (indicated by recv returning 0), which may involve checking the completeness and correctness of the request before processing it further. If the request is valid, the server can proceed to generate a response based on the request data.
 	else
 	{
-	   closeClient(client_fd);
+	   closeClient(client->fd);
 		return ;
 	}
 
 	if (client->request.is_finished())
-		processRequest(client_fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
+		processRequest(client->fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
 }
 
 void Server::processRequest(int client_fd)

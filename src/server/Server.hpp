@@ -60,10 +60,10 @@ public:
     void handleEvent(struct epoll_event &event);
 
     void acceptClient(int listen_fd);
-    void handleClient(int client_fd, uint32_t events);
-    void handleRead(int client_fd);
+    void handleClient(EpollData* data, uint32_t events);
+    void handleRead(Client *client);
+    void handleWrite(Client *client);
     void processRequest(int client_fd);
-    void handleWrite(int client_fd);
 
     void closeClient(int fd);
 };
