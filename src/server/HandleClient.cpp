@@ -65,67 +65,28 @@ void Server::handleWrite(int client_fd)
         }
     }
 }
-// void Server::handleRead(int client_fd)
-// {
-// 	Client *client = clients[client_fd];
-// 	char buffer[4096];
-// 	int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-
-// 	if (bytes > 0)
-// 	{
-// 		buffer[bytes] = '\0'; // Null-terminate the buffer to safely convert it to a string
-// 		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
-// 	}
-// 	else if (bytes == 0)//this means the client has closed the connection, so the server should close the client connection to free up resources and prevent further attempts to read from a client that is no longer connected.
-// 		client->request.validate();// Validate the request once the client has finished sending data (indicated by recv returning 0), which may involve checking the completeness and correctness of the request before processing it further. If the request is valid, the server can proceed to generate a response based on the request data.
-// 	else
-// 	{
-// 	   closeClient(client_fd);
-// 		return ;
-// 	}
-
-// 	if (client->request.is_finished())
-// 		processRequest(client_fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
-// }
-
 
 void Server::handleRead(int client_fd)
 {
-    char buffer[4096];
+	Client *client = clients[client_fd];
+	char buffer[4096];
+	int bytes = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
-    int bytes = recv(client_fd,
-                     buffer,
-                     sizeof(buffer) - 1,
-                     0);
+	if (bytes > 0)
+	{
+		buffer[bytes] = '\0'; // Null-terminate the buffer to safely convert it to a string
+		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
+	}
+	else if (bytes == 0)//this means the client has closed the connection, so the server should close the client connection to free up resources and prevent further attempts to read from a client that is no longer connected.
+		client->request.validate();// Validate the request once the client has finished sending data (indicated by recv returning 0), which may involve checking the completeness and correctness of the request before processing it further. If the request is valid, the server can proceed to generate a response based on the request data.
+	else
+	{
+	   closeClient(client_fd);
+		return ;
+	}
 
-    if (bytes > 0)
-    {
-        buffer[bytes] = '\0';
-
-        std::cout << "Received:\n"
-                  << buffer
-                  << std::endl;
-
-        // mock response directly
-        processRequest(client_fd);
-    }
-    else if (bytes == 0)
-    {
-        std::cout << "Client disconnected: "
-                  << client_fd
-                  << std::endl;
-
-        closeClient(client_fd);
-    }
-    else
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;
-
-        std::cerr << "recv failed\n";
-
-        closeClient(client_fd);
-    }
+	if (client->request.is_finished())
+		processRequest(client_fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
 }
 
 void Server::processRequest(int client_fd)
@@ -143,7 +104,11 @@ void Server::processRequest(int client_fd)
     // switch to write mode
     struct epoll_event event;
     event.events = EPOLLOUT;
-    event.data.fd = client_fd;
+    EpollData* data = new EpollData;
+    data->fd = client_fd;
+    data->type = CLIENT;
+    data->client = client;
+    event.data.ptr = data;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event) == -1)
         throw std::runtime_error("epoll_ctl MOD failed");

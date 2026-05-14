@@ -44,10 +44,10 @@ void Server::initEpoll()
 
 	struct epoll_event event;
 	event.events = EPOLLIN;
-	EpollData* data = new EpollData;
-
+	
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
+		EpollData* data = new EpollData; // TODO: why inside the loop but not outside? because we need a separate EpollData structure for each listening socket to store its file descriptor and type, allowing the server to differentiate between events on different listening sockets when they occur. If we used a single EpollData structure outside the loop, it would be overwritten with the last listening socket's information, making it impossible to correctly identify which socket an event is associated with when handling events in the main loop.
 		data->fd = listen_fds[i];
 		data->type = SERVER;
 		data->client = NULL;
