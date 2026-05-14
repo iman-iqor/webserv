@@ -12,6 +12,7 @@
 
 Request::Request( void )
 {
+	_finished_reading = false;
 	_state = READ_START_LINE;
 	_method = "";
 	_path = "";
@@ -188,13 +189,24 @@ RequestState Request::get_state( void ) const
 	return _state;
 }
 
-void Request::validate( void )
+// void Request::validate( void )
+// {
+// 	if (_state != FINISHED)
+// 		throw BadRequestException("Request is not fully parsed");
+// 	if (_body.size() != _content_length)
+// 		throw BadRequestException("Body size does not match Content-Length");
+// 	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request validation successful" << std::endl;
+// }
+
+void Request::finish_reading( void )
 {
-	if (_state != FINISHED)
-		throw BadRequestException("Request is not fully parsed");
-	if (_body.size() != _content_length)
-		throw BadRequestException("Body size does not match Content-Length");
-	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request validation successful" << std::endl;
+	_finished_reading = true;
+	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Finished reading request" << std::endl;
+}
+
+bool Request::is_finished_reading( void ) const
+{
+	return _finished_reading;
 }
 
 bool Request::extract_plain_body( void )
