@@ -1,41 +1,49 @@
 #include <iostream>
-#include <vector>
-#include <string>
-#include "Config.hpp"   // Oumaima's part
-#include "Server.hpp"   // Imane's part
+#include <exception>
+#include <csignal>
+#include <unistd.h>
+#include "Config.hpp"
+#include "Parser.hpp"
+#include "Server.hpp"
 
-int main(int argc, char **argv) {
-    
+volatile sig_atomic_t g_shutdown = 0;
+
+void signalHandler(int signum)
+{
+    (void)signum;
+    if (!g_shutdown)
+        write(STDERR_FILENO, "\nReceived interrupt signal. Shutting down...\n", 46);
+    g_shutdown = 1;
+}
+
+int main(int argc, char **argv)
+{
     std::string configPath;
 
-    // 1. Determine which config file to use
-    if (argc == 2) {
+    if (argc == 2)
         configPath = argv[1];
-    } else if (argc == 1) {
-        configPath = "default.conf";
-    } else {
-        std::cerr << "Usage: ./webserv [configuration_file]" << std::endl;
+    else
+    {
+        std::cerr << "Usage: ./webserv [config file] !" << std::endl;
         return 1;
     }
 
-    try {
-        // 2. OUMAIMA'S PART: Parse the file
-        Config config;
-        config.parseFile(configPath); 
+    try
+    {
+        std::signal(SIGINT, signalHandler);
+        std::signal(SIGTERM, signalHandler);
 
-        // 3. IMANE'S PART: Initialize the Engine
-        Server webserv;
-        
-        std::cout << "--- Initializing Sockets ---" << std::endl;
-        webserv.init(config); 
+        Parser parser(configPath);
+        Config config = parser.parse();
 
-        std::cout << "--- Server Running with epoll ---" << std::endl;
-        webserv.run(); 
-
-    } catch (const std::exception &e) {
-        // This catches any parsing errors from Oumaima 
-        // or socket errors from Imane
-        std::cerr << "Fatal Error: " << e.what() << std::endl;
+        Server server(config);
+        server.setupSockets();
+        server.initEpoll();
+        server.start();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
 

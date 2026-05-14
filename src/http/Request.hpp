@@ -34,7 +34,6 @@ class Request {
     std::string _buffer;
 	Header *_headers;
 	std::string _raw_bytes;
-	bool _finished_reading;
 
 	
     bool (Request::*_parse[4])(void);
@@ -66,10 +65,6 @@ public:
 	bool is_method_supported(const std::string& method) const;
 
 	RequestState get_state( void ) const ;
-
-	void finish_reading( void );
-	bool is_finished_reading( void ) const;
-
 };
 
 #endif // REQUEST_HPP

@@ -36,7 +36,6 @@ Server::~Server()
 
 	std::cout << "Server shut down cleanly" << std::endl;
 }
-
 void Server::initEpoll()
 {
 	epoll_fd = epoll_create1(0); // Create an epoll instance and get a file descriptor for it to monitor events on multiple file descriptors efficiently
@@ -45,11 +44,14 @@ void Server::initEpoll()
 
 	struct epoll_event event;
 	event.events = EPOLLIN;
-
+	
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		event.data.fd = listen_fds[i]; // Store the file descriptor in the event data for later identification
-
+		EpollData* data = new EpollData; // TODO: why inside the loop but not outside? because we need a separate EpollData structure for each listening socket to store its file descriptor and type, allowing the server to differentiate between events on different listening sockets when they occur. If we used a single EpollData structure outside the loop, it would be overwritten with the last listening socket's information, making it impossible to correctly identify which socket an event is associated with when handling events in the main loop.
+		data->fd = listen_fds[i];
+		data->type = SERVER;
+		data->client = NULL;
+		event.data.ptr = data; // We can use the data.ptr to store a pointer to a structure containing additional information about the event, such as the type of event or associated data, which can be useful for handling different types of events in a more flexible way.
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1) // Register the listening socket with the epoll instance to monitor for incoming connections
 			throw std::runtime_error("epoll_ctl ADD failed");
 	}
@@ -62,10 +64,12 @@ void Server::start()
 	{
 		int nfds = epoll_wait(epoll_fd, events, 1024, -1); // Wait for events on the monitored file descriptors, blocking indefinitely until at least one event occurs. The events are stored in the events array, and nfds indicates how many events were returned.
 
-        if (nfds < 0)
-        {
-            throw std::runtime_error("epoll_wait failed");
-        }
+		if (nfds < 0)
+		{
+			if (errno == EINTR)
+				break;
+			throw std::runtime_error("epoll_wait failed");
+		}
 
 		for (int i = 0; i < nfds; i++)
 		{
@@ -91,24 +95,14 @@ void Server::start()
 
 void Server::handleEvent(struct epoll_event &event)
 {
-	int fd = event.data.fd;
+	EpollData* data = (EpollData*)event.data.ptr;
+	int fd = data->fd;
 
-	if (isListenSocket(fd)) // Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
+	if (data->type == SERVER) // Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
 		acceptClient(fd);
 	else
-		handleClient(fd, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
+		handleClient(data, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
 }
-
-bool Server::isListenSocket(int fd)
-{
-	for (size_t i = 0; i < listen_fds.size(); i++)
-	{
-		if (listen_fds[i] == fd)
-			return true;
-	}
-	return false;
-}
-
 
 
 void Server::closeClient(int fd)
@@ -122,8 +116,6 @@ void Server::closeClient(int fd)
 	close(fd);
 	std::cout << "Client disconnected: " << fd << std::endl;
 }
-
-
 
 
 
