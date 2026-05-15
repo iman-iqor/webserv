@@ -30,7 +30,7 @@ struct RouteInfo
     std::string file_path;//path of the file to server file actio
     std::string redirect_url;
     std::string cgi_string;//script path for execute cgi
-    Location location;//the location block that matched the request
+    Location *location;//the location block that matched the request
     int http_status;
     std::string status_message;//ok or not found li  7bit
     std::map<std::string,std::string> headers;//extra headers n9darnhtajom
