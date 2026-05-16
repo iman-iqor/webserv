@@ -11,6 +11,7 @@ SRC = \
 	src/config/tokenizer.cpp\
 	src/http/Header.cpp \
 	src/http/Request.cpp \
+	src/http/cgi.cpp \
 	src/http/Response.cpp \
 	src/server/Server.cpp \
 	src/server/AcceptClient.cpp \

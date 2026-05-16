@@ -59,6 +59,7 @@ public:
 
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
+	const std::string& get_body( void ) const;
 	void set_server_block(std::vector<ServerBlock *> *server_blocks);
 	ServerBlock *get_server_block( void ) const;
 

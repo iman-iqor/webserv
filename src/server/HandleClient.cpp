@@ -1,9 +1,173 @@
 #include"Server.hpp"
+#include"../http/CgiHandler.hpp"
+#include <signal.h>
+#include <sys/wait.h>
+
+void handle_cgi_stdin(Client *client)
+{
+    if (!client->cgi_state || client->cgi_state->stdin_fd < 0)
+        return;
+    
+    const std::string &body = client->request.get_body();
+    size_t remaining = body.size() - client->cgi_state->body_sent;
+    
+    std::cout << "[CGI_STDIN] body_size=" << body.size() << " sent=" << client->cgi_state->body_sent 
+              << " remaining=" << remaining << std::endl;
+    
+    if (remaining > 0)
+    {
+        int written = write(client->cgi_state->stdin_fd,
+                           body.c_str() + client->cgi_state->body_sent,
+                           remaining);
+        if (written > 0)
+        {
+            client->cgi_state->body_sent += written;
+            std::cout << "[CGI_STDIN] wrote " << written << " bytes, total=" << client->cgi_state->body_sent << std::endl;
+        }
+        else if (written < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
+        {
+            std::cerr << "[CGI_STDIN] write error, closing stdin_fd" << std::endl;
+            close(client->cgi_state->stdin_fd);
+            client->cgi_state->stdin_fd = -1;
+        }
+    }
+    else if (client->cgi_state->body_sent == body.size())
+    {
+        std::cout << "[CGI_STDIN] All body sent (" << body.size() << " bytes), closing stdin_fd" << std::endl;
+        close(client->cgi_state->stdin_fd);
+        client->cgi_state->stdin_fd = -1;
+    }
+}
+
+void handle_cgi_stdout(Client *client)
+{
+    if (!client->cgi_state || client->cgi_state->stdout_fd < 0)
+        return;
+    
+    char buffer[4096];
+    int bytes = read(client->cgi_state->stdout_fd, buffer, sizeof(buffer) - 1);
+    
+    std::cout << "[CGI_STDOUT] read=" << bytes << " total_collected=" << client->cgi_state->cgi_output.size() << std::endl;
+    
+    if (bytes > 0)
+    {
+        client->cgi_state->cgi_output.append(buffer, bytes);
+        std::cout << "[CGI_STDOUT] appended, now total=" << client->cgi_state->cgi_output.size() << std::endl;
+    }
+    else if (bytes == 0)
+    {
+        std::cout << "[CGI_STDOUT] EOF, closing stdout_fd" << std::endl;
+        close(client->cgi_state->stdout_fd);
+        client->cgi_state->stdout_fd = -1;
+        
+        int status = 0;
+        pid_t wpid = waitpid(client->cgi_state->pid, &status, WNOHANG);
+        std::cout << "[CGI_STDOUT] waitpid(" << client->cgi_state->pid << ") returned " << wpid << " status=" << status << std::endl;
+        
+        if (wpid == client->cgi_state->pid)
+        {
+            std::cout << "[CGI_STDOUT] Child exited! Building response." << std::endl;
+            std::ostringstream oss;
+
+            oss << "HTTP/1.1 200 OK\r\n";
+            oss << "Content-Type: text/plain\r\n";
+            oss << "Content-Length: "  << client->cgi_state->cgi_output.size() << "\r\n";
+            oss << "\r\n";
+            oss << client->cgi_state->cgi_output;
+            client->response = oss.str();
+            client->ready_to_send = true;
+            std::cout << "[CGI_STDOUT] ready_to_send=true, response_size=" << client->response.size() << std::endl;
+            client->cleanup_cgi();
+        }
+        else
+            std::cout << "[CGI_STDOUT] Child still running (wpid=" << wpid << ")" << std::endl;
+    }
+    else if (bytes < 0 && (errno != EAGAIN && errno != EWOULDBLOCK))
+    {
+        std::cerr << "[CGI_STDOUT] read error " << errno << ", closing stdout_fd" << std::endl;
+        close(client->cgi_state->stdout_fd);
+        client->cgi_state->stdout_fd = -1;
+    }
+}
 
 void Server::handleClient(EpollData* data, uint32_t events)
 {
     int client_fd = data->fd;
-    // ✅ Check for errors first
+    
+    // Handle CGI pipe events FIRST before generic EPOLLERR/EPOLLHUP
+    // to prevent pipe close from being treated as client disconnect.
+    if (data->type == CGI_PIPE)
+    {
+        std::cout << "[HANDLE_CGI_PIPE] event fd=" << data->fd << " events=" << events << " (EPOLLOUT=" << EPOLLOUT << " EPOLLIN=" << EPOLLIN << " EPOLLHUP=" << EPOLLHUP << ")" << std::endl;
+        Client *client = data->client;
+        if (!client)
+            return;
+        
+        if (events & EPOLLOUT)
+        {
+            std::cout << "[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin" << std::endl;
+            handle_cgi_stdin(client);
+        }
+        if (events & EPOLLIN)
+        {
+            std::cout << "[HANDLE_CGI_PIPE] EPOLLIN event, calling handle_cgi_stdout" << std::endl;
+            handle_cgi_stdout(client);
+        }
+        
+        // After reading, check for EPOLLHUP to signal EOF and allow response building
+        if (events & EPOLLHUP)
+        {
+            std::cout << "[HANDLE_CGI_PIPE] EPOLLHUP on CGI pipe fd=" << data->fd << std::endl;
+            if (data->fd == client->cgi_state->stdout_fd && client->cgi_state->stdout_fd >= 0)
+            {
+                std::cout << "[HANDLE_CGI_PIPE] Triggering EOF handling for stdout" << std::endl;
+                close(client->cgi_state->stdout_fd);
+                client->cgi_state->stdout_fd = -1;
+                
+                int status = 0;
+                pid_t wpid = waitpid(client->cgi_state->pid, &status, WNOHANG);
+                std::cout << "[HANDLE_CGI_PIPE] waitpid(" << client->cgi_state->pid << ") returned " << wpid << std::endl;
+                
+                if (wpid == client->cgi_state->pid)
+                {
+                    std::cout << "[HANDLE_CGI_PIPE] Child exited! Building response." << std::endl;
+                    std::ostringstream oss;
+                    oss << "HTTP/1.1 200 OK\r\n";
+                    oss << "Content-Type: text/plain\r\n";
+                    oss << "Content-Length: " << client->cgi_state->cgi_output.size() << "\r\n";
+                    oss << "\r\n";
+                    oss << client->cgi_state->cgi_output;
+                    client->response = oss.str();
+                    client->ready_to_send = true;
+                    std::cout << "[HANDLE_CGI_PIPE] ready_to_send=true, response_size=" << client->response.size() << std::endl;
+                    
+                    // Deregister and delete the CGI pipe EpollData
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, data->fd, NULL);
+                    delete data;
+                    
+                    client->cleanup_cgi();
+                }
+            }
+        }
+        
+        if (client->ready_to_send)
+        {
+            std::cout << "[HANDLE_CGI_PIPE] ready_to_send=true, re-registering client fd=" << client->fd << " for EPOLLOUT" << std::endl;
+            struct epoll_event event;
+            event.events = EPOLLOUT;
+            EpollData* wr_data = new EpollData;
+            wr_data->fd = client->fd;
+            wr_data->type = CLIENT;
+            wr_data->client = client;
+            event.data.ptr = wr_data;
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client->fd, &event) == -1)
+            {
+                epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
+            }
+        }
+        return;
+    }
+    
     if (events & EPOLLERR)
     {
         std::cerr << "Error event on client " << client_fd << std::endl;
@@ -17,6 +181,7 @@ void Server::handleClient(EpollData* data, uint32_t events)
         closeClient(client_fd);
         return;
     }
+    
     if (events & EPOLLIN)
         handleRead(data->client);
     else if (events & EPOLLOUT)
@@ -73,43 +238,76 @@ void Server::handleRead(Client *client)
 	char buffer[4096];
 	int bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
 
+	std::cout << "[HANDLE_READ] fd=" << client->fd << " bytes=" << bytes << std::endl;
+
 	if (bytes > 0)
 	{
 		buffer[bytes] = '\0'; // Null-terminate the buffer to safely convert it to a string
 		client->request.append_to_buffer(buffer); // Append the received data to the client's request buffer for
+		std::cout << "[HANDLE_READ] appended " << bytes << " bytes to request" << std::endl;
 	}
 	else
 	{
+	   std::cout << "[HANDLE_READ] recv=" << bytes << ", closing client" << std::endl;
 	   closeClient(client->fd);
        //cleanup and close connection if recv returns 0 (client closed connection) or -1 (error)
 		return ;
 	}
 	if (client->request.is_finished())
+	{
+		std::cout << "[HANDLE_READ] request finished! calling processRequest" << std::endl;
 		processRequest(client->fd); // Process the client's request once it is fully received and validated, which may involve generating a response based on the request data and preparing it to be sent back to the client.
-    
+	}
+    else
+        std::cout << "[HANDLE_READ] request not finished yet" << std::endl;
 }
 
 void Server::processRequest(int client_fd)
 {
     Client *client = clients[client_fd];
 
-    // 🔥 MOCK RESPONSE
-    client->response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 13\r\n"
-        "\r\n"
-        "Hello World!\n";
-
-    // switch to write mode
-    struct epoll_event event;
-    event.events = EPOLLOUT;
-    EpollData* data = new EpollData;
-    data->fd = client_fd;
-    data->type = CLIENT;
-    data->client = client;
-    event.data.ptr = data;
-
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event) == -1)
-        throw std::runtime_error("epoll_ctl MOD failed");
+    try
+    {
+        std::cout << BOLD_YELLOW << "[SERVER]" << RESET << " Processing request from client " << client_fd << std::endl;
+        client->cgi_state = new Client::CgiState;
+        client->cgi_state->pid = 0;
+        client->cgi_state->stdin_fd = -1;
+        client->cgi_state->stdout_fd = -1;
+        client->cgi_state->body_sent = 0;
+        
+        std::string bin_path = "/usr/bin/python3";
+        std::string cgi_path = "test.py";
+        
+        CgiProcessResult result = cgi_start(client, cgi_path, bin_path, epoll_fd);
+        
+        client->cgi_state->pid = result.pid;
+        client->cgi_state->stdin_fd = result.request_write_fd;
+        client->cgi_state->stdout_fd = result.response_read_fd;
+        
+        std::cout << "[SERVER] CGI process forked: pid=" << result.pid 
+                  << " stdin_fd=" << result.request_write_fd 
+                  << " stdout_fd=" << result.response_read_fd << std::endl;
+        
+        epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "CGI error: " << e.what() << std::endl;
+        client->response =
+            "HTTP/1.1 500 Internal Server Error\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: 21\r\n"
+            "\r\n"
+            "Internal Server Error\n";
+        client->ready_to_send = true;
+        
+        struct epoll_event event;
+        event.events = EPOLLOUT;
+        EpollData* data = new EpollData;
+        data->fd = client_fd;
+        data->type = CLIENT;
+        data->client = client;
+        event.data.ptr = data;
+        epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
+    }
 }

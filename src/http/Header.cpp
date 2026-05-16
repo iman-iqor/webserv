@@ -44,8 +44,8 @@ Header::~Header( void )
 
 void Header::validate_headers( void )
 {
-    if (_headers.empty() || _headers.find("host") == _headers.end())
-        throw BadRequestException("Missing required Host header");
+    // if (_headers.empty() || _headers.find("host") == _headers.end())
+    //     throw BadRequestException("Missing required Host header");
     if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Required headers are present" << std::endl;
 }
 

@@ -48,22 +48,30 @@ const std::string& Request::get_method( void ) const
 	return _method;
 }
 
+const std::string& Request::get_body( void ) const
+{
+	return _body;
+}
+
 void Request::set_server_block(std::vector<ServerBlock *> *server_blocks)
 {
 	(void) server_blocks;
-	std::string host = _headers->getHeader("host");
-	if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Looking for server block host=" << host << std::endl;
-	for (size_t i = 0; i < sv_blocks->size(); ++i) {
-		std::vector<std::string> &names = (*sv_blocks)[i]->server_names;
-		for (size_t j = 0; j < names.size(); j++) {
-			if (names[j] == host) {
-				if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Server block found: " << GREEN << host << RESET << std::endl;
-				_server_block = (*sv_blocks)[i];
-				return ;
-			}
-		}
-	}
-	throw BadRequestException("No server block found");
+	if (sv_blocks->empty())
+		throw BadRequestException("No server blocks configured");
+	_server_block = (*sv_blocks)[0];
+	// std::string host = _headers->getHeader("host");
+	// if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Looking for server block host=" << host << std::endl;
+	// for (size_t i = 0; i < sv_blocks->size(); ++i) {
+	// 	std::vector<std::string> &names = (*sv_blocks)[i]->server_names;
+	// 	for (size_t j = 0; j < names.size(); j++) {
+	// 		if (names[j] == host) {
+	// 			if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Server block found: " << GREEN << host << RESET << std::endl;
+	// 			_server_block = (*sv_blocks)[i];
+	// 			return ;
+	// 		}
+	// 	}
+	// }
+	// throw BadRequestException("No server block found");
 }
 
 ServerBlock *Request::get_server_block( void ) const
@@ -73,6 +81,7 @@ ServerBlock *Request::get_server_block( void ) const
 
 void Request::append_to_buffer( const char *s )
 {
+	std::cout << CYAN << "[REQUEST]" << RESET << " Appending to buffer: " << s << std::endl;
 	_buffer += s;
 	if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << _buffer.size() << std::endl;
 	_parser();

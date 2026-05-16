@@ -1,0 +1,302 @@
+Listening on 0.0.0.0:7070
+Listening on 0.0.0.0:8080
+Listening on 127.0.0.1:9090
+New client connected: 7
+[HANDLE_READ] fd=7 bytes=78
+[36m[REQUEST][00m Appending to buffer: GET / HTTP/1.1
+Host: 127.0.0.1:9090
+User-Agent: curl/7.81.0
+Accept: */*
+
+
+[HANDLE_READ] appended 78 bytes to request
+[HANDLE_READ] request finished! calling processRequest
+[1;33m[SERVER][00m Processing request from client 7
+[SERVER] CGI process forked: pid=374876 stdin_fd=9 stdout_fd=10
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[CGI_STDIN] body_size=0 sent=0 remaining=0
+[CGI_STDIN] All body sent (0 bytes), closing stdin_fd
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=10 events=1 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLIN event, calling handle_cgi_stdout
+[CGI_STDOUT] read=254 total_collected=0
+[CGI_STDOUT] appended, now total=254
+[HANDLE_CGI_PIPE] event fd=10 events=16 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLHUP on CGI pipe fd=10
+[HANDLE_CGI_PIPE] Triggering EOF handling for stdout
+[HANDLE_CGI_PIPE] waitpid(374876) returned 374876
+[HANDLE_CGI_PIPE] Child exited! Building response.
+[HANDLE_CGI_PIPE] ready_to_send=true, response_size=320
+[HANDLE_CGI_PIPE] ready_to_send=true, re-registering client fd=7 for EPOLLOUT
+Client disconnected: 7
+New client connected: 7
+[HANDLE_READ] fd=7 bytes=617
+[36m[REQUEST][00m Appending to buffer: GET / HTTP/1.1
+Host: 127.0.0.1:9090
+Connection: keep-alive
+sec-ch-ua: "Brave";v="143", "Chromium";v="143", "Not A(Brand";v="24"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-GPC: 1
+Accept-Language: en-US,en;q=0.8
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+[HANDLE_READ] appended 617 bytes to request
+[HANDLE_READ] request finished! calling processRequest
+[1;33m[SERVER][00m Processing request from client 7
+[SERVER] CGI process forked: pid=375011 stdin_fd=9 stdout_fd=10
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[CGI_STDIN] body_size=0 sent=0 remaining=0
+[CGI_STDIN] All body sent (0 bytes), closing stdin_fd
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=10 events=1 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLIN event, calling handle_cgi_stdout
+[CGI_STDOUT] read=254 total_collected=0
+[CGI_STDOUT] appended, now total=254
+[HANDLE_CGI_PIPE] event fd=10 events=16 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLHUP on CGI pipe fd=10
+[HANDLE_CGI_PIPE] Triggering EOF handling for stdout
+[HANDLE_CGI_PIPE] waitpid(375011) returned 375011
+[HANDLE_CGI_PIPE] Child exited! Building response.
+[HANDLE_CGI_PIPE] ready_to_send=true, response_size=320
+[HANDLE_CGI_PIPE] ready_to_send=true, re-registering client fd=7 for EPOLLOUT
+Client disconnected: 7
+New client connected: 7
+[HANDLE_READ] fd=7 bytes=582
+[36m[REQUEST][00m Appending to buffer: GET /favicon.ico HTTP/1.1
+Host: 127.0.0.1:9090
+Connection: keep-alive
+sec-ch-ua-platform: "Linux"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
+sec-ch-ua: "Brave";v="143", "Chromium";v="143", "Not A(Brand";v="24"
+sec-ch-ua-mobile: ?0
+Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Sec-GPC: 1
+Accept-Language: en-US,en;q=0.8
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: no-cors
+Sec-Fetch-Dest: image
+Referer: http://127.0.0.1:9090/
+Accept-Encoding: gzip, deflate, br, zstd
+
+
+[HANDLE_READ] appended 582 bytes to request
+[HANDLE_READ] request finished! calling processRequest
+[1;33m[SERVER][00m Processing request from client 7
+[SERVER] CGI process forked: pid=375015 stdin_fd=9 stdout_fd=10
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[CGI_STDIN] body_size=0 sent=0 remaining=0
+[CGI_STDIN] All body sent (0 bytes), closing stdin_fd
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=9 events=4 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLOUT event, calling handle_cgi_stdin
+[HANDLE_CGI_PIPE] event fd=10 events=1 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLIN event, calling handle_cgi_stdout
+[CGI_STDOUT] read=254 total_collected=0
+[CGI_STDOUT] appended, now total=254
+[HANDLE_CGI_PIPE] event fd=10 events=16 (EPOLLOUT=4 EPOLLIN=1 EPOLLHUP=16)
+[HANDLE_CGI_PIPE] EPOLLHUP on CGI pipe fd=10
+[HANDLE_CGI_PIPE] Triggering EOF handling for stdout
+[HANDLE_CGI_PIPE] waitpid(375015) returned 375015
+[HANDLE_CGI_PIPE] Child exited! Building response.
+[HANDLE_CGI_PIPE] ready_to_send=true, response_size=320
+[HANDLE_CGI_PIPE] ready_to_send=true, re-registering client fd=7 for EPOLLOUT
+Client disconnected: 7

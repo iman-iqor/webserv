@@ -31,8 +31,20 @@ public:
     Request request;
     bool request_complete;
     bool ready_to_send;
+    
+    struct CgiState
+    {
+        pid_t pid;
+        int stdin_fd;
+        int stdout_fd;
+        size_t body_sent;
+        std::string cgi_output;
+    };
+    CgiState *cgi_state;
 
     Client(int listen_fd, int client_fd, std::vector< ServerBlock* > *sv_block);
     ~Client();
+    
+    void cleanup_cgi(void);
 };
 #endif // CLIENT_HPP
