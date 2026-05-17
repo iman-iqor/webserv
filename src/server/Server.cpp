@@ -4,6 +4,7 @@
 Server::Server(Config &config)
 {
 	this->config = config;
+	router = new Router(&config);
 	epoll_fd = -1; // Initialize epoll_fd to an invalid value
 }
 
@@ -33,6 +34,8 @@ Server::~Server()
 	{
 		close(epoll_fd);
 	}
+	if(router)
+		delete router;
 
 	std::cout << "Server shut down cleanly" << std::endl;
 }

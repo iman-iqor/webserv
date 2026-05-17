@@ -21,6 +21,7 @@ Request::Request( void )
 	_content_length = 0;
 	_location = NULL;
 	_read_bytes = 0;
+	sv_blocks = NULL;
 	_parse[READ_START_LINE] = &Request::extract_first_line;
 	_parse[READ_HEADERS] = &Request::extract_headers;
 	_parse[READ_PLAIN_BODY] = &Request::extract_plain_body;
@@ -46,6 +47,11 @@ const std::string& Request::get_path( void ) const
 const std::string& Request::get_method( void ) const
 {
 	return _method;
+}
+
+void Request::init_server_blocks(std::vector<ServerBlock *> *server_blocks)
+{
+	sv_blocks = server_blocks;
 }
 
 void Request::set_server_block(std::vector<ServerBlock *> *server_blocks)

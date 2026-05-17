@@ -60,6 +60,7 @@ public:
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
 	void set_server_block(std::vector<ServerBlock *> *server_blocks);
+	void init_server_blocks(std::vector<ServerBlock *> *server_blocks);
 	ServerBlock *get_server_block( void ) const;
 
 	bool is_method_supported(const std::string& method) const;

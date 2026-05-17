@@ -43,3 +43,29 @@ bool Router::isMethodAllowed(const std::string &method,Location* location)
     }
     return false;
 }
+std::string Router::resolveFilePath(const std::string &path,Location *location)
+{
+    if(!location) return "";
+
+    std::string relative_path = path;
+    if(path.find(location->path) == 0)
+    {
+        relative_path = path.substr(location->path.length());
+        if(relative_path.empty())
+            relative_path = "/";
+    }
+    std::string full_path = location->root + relative_path;
+
+    return full_path;
+}
+
+bool Router::fileExists(const std::string &path)
+{
+    return (access(path.c_str(),F_OK) == 0);
+}
+
+bool Router::isDirectory(const std::string &path)
+{
+    struct stat st;
+    return (stat(path.c_str(),&st) == 0 && S_ISDIR(st.st_mode));
+}

@@ -7,8 +7,7 @@ Client::Client(int listen_fd, int client_fd, std::vector< ServerBlock* > *sv_blo
     ready_to_send = false;
     
     listen_fd = -1;
-    // client_ip = "";
-    // client_port = -1;
+    
 }
 
 Client::~Client() {

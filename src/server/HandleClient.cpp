@@ -89,27 +89,122 @@ void Server::handleRead(Client *client)
     
 }
 
-void Server::processRequest(int client_fd)
+std::string intToString(size_t n)
 {
+    std::stringstream s;
+    s<<n;
+    return s.str();
+}
+
+void Server::processRequest(int client_fd) {
     Client *client = clients[client_fd];
-
-    // 🔥 MOCK RESPONSE
-    client->response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 13\r\n"
-        "\r\n"
-        "Hello World!\n";
-
-    // switch to write mode
+    
+    // STEP 1: Get the server block for this client
+    ServerBlock* server_block = NULL;
+    if (fd_to_servers.find(client->listen_fd) != fd_to_servers.end()) {
+        if (fd_to_servers[client->listen_fd].size() > 0) {
+            server_block = fd_to_servers[client->listen_fd][0];
+        }
+    }
+    
+    if (!server_block) {
+        // No server config found
+        client->response = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n";
+        return;
+    }
+    
+    // ✅ STEP 2: USE ROUTER TO DETERMINE ACTION
+    RouteInfo route = router->route(client->request, server_block);
+    
+    // ✅ STEP 3: HANDLE BASED ON ROUTE ACTION
+    switch (route.action) {
+        
+        case SERVE_FILE: {
+            // Read file and send it
+            std::ifstream file(route.file_path.c_str());
+            std::string file_content((std::istreambuf_iterator<char>(file)),
+                                    std::istreambuf_iterator<char>());
+            
+            client->response = "HTTP/1.1 200 OK\r\n";
+            client->response += "Content-Length: " + intToString(file_content.length()) + "\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            client->response += file_content;
+            break;
+        }
+        
+        case DIRECTORY_LISTING: {
+            // Generate HTML directory listing
+            std::string html = "<html><body><h1>Directory Listing</h1><ul>";
+            // TODO: Generate list of files
+            html += "</ul></body></html>";
+            
+            client->response = "HTTP/1.1 200 OK\r\n";
+            client->response += "Content-Type: text/html\r\n";
+            client->response += "Content-Length: " + intToString(html.length()) + "\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            client->response += html;
+            break;
+        }
+        
+        case REDIRECT: {
+            client->response = "HTTP/1.1 301 Moved Permanently\r\n";
+            client->response += "Location: " + route.redirect_url + "\r\n";
+            client->response += "Content-Length: 0\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            break;
+        }
+        
+        case EXECUTE_CGI: {
+            // TODO: Execute CGI script
+            client->response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
+            break;
+        }
+        
+        case ERROR_404: {
+            std::string error_body = "<html><body><h1>404 Not Found</h1></body></html>";
+            client->response = "HTTP/1.1 404 Not Found\r\n";
+            client->response += "Content-Type: text/html\r\n";
+            client->response += "Content-Length: " + intToString(error_body.length()) + "\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            client->response += error_body;
+            break;
+        }
+        
+        case ERROR_403: {
+            std::string error_body = "<html><body><h1>403 Forbidden</h1></body></html>";
+            client->response = "HTTP/1.1 403 Forbidden\r\n";
+            client->response += "Content-Type: text/html\r\n";
+            client->response += "Content-Length: " + intToString(error_body.length()) + "\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            client->response += error_body;
+            break;
+        }
+        
+        case ERROR_405: {
+            std::string error_body = "<html><body><h1>405 Method Not Allowed</h1></body></html>";
+            client->response = "HTTP/1.1 405 Method Not Allowed\r\n";
+            client->response += "Content-Type: text/html\r\n";
+            client->response += "Content-Length: " + intToString(error_body.length()) + "\r\n";
+            client->response += "Allow: GET, POST, DELETE\r\n";
+            client->response += "Connection: keep-alive\r\n";
+            client->response += "\r\n";
+            client->response += error_body;
+            break;
+        }
+        
+        default: {
+            client->response = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n";
+        }
+    }
+    
+    // STEP 4: Switch to write mode
     struct epoll_event event;
     event.events = EPOLLOUT;
-    EpollData* data = new EpollData;
-    data->fd = client_fd;
-    data->type = CLIENT;
-    data->client = client;
-    event.data.ptr = data;
-
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event) == -1)
-        throw std::runtime_error("epoll_ctl MOD failed");
+    event.data.fd = client_fd;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
 }
