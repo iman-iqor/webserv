@@ -29,6 +29,11 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
     if(!isMethodAllowed(request.get_method(),route_info.location))
     {
         
+
+
+
+
+        
     }
 
     return route_info;
