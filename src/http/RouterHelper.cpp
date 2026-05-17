@@ -36,5 +36,10 @@ bool Router::isMethodAllowed(const std::string &method,Location* location)
     if(location->methods.empty())//there is no methods dir libghiti
         return true;
     
-    for(cons )
+    for(size_t i =0;i < location->methods.size();i++)
+    {
+        if(location->methods[i] == method)
+            return true;
+    }
+    return false;
 }
