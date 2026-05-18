@@ -24,7 +24,7 @@ struct Location {
     std::vector<std::string> methods;
     std::string index;
     bool autoindex;
-    std::map<std::string, std::string> cgi; // this for cgi to support multiples languages
+    std::map<std::string, std::string> cgi;
     std::string upload_path;
     std::string return_url;
     int return_code;
