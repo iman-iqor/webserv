@@ -18,6 +18,8 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
     route_info.headers.clear();
 
     route_info.location = findMatchingLocation(request.get_path());
+    std::cout<<"\033[31mhello\033[31m"<<request.get_method()<<std::endl;
+
     if(!route_info.location)//what should i do if i did not fin d thelocation ?
     {
         route_info.action = ERROR_404;
@@ -44,6 +46,7 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
     }
 
     std::string method = request.get_method();
+
     if(method == "GET")
         return routeGET(request,route_info.location);
     // else if(method == "POST")
@@ -65,6 +68,7 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
 
         std::string file_path = resolveFilePath(request.get_path(),location);
         
+        std::cout<<"\033[31mhello\033[31m"<<std::endl;
         if(!fileExists(file_path))
         {
             route_info.action = ERROR_404;
