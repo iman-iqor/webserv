@@ -33,20 +33,12 @@ Header::Header( std::string &headers )
 {
     if (VERBOS) std::cout << BOLD_MAGENTA << "[HEADER]" << RESET << " Constructing header parser" << std::endl;
     _parser(headers);
-    validate_headers();
     if (VERBOS) std::cout << BOLD_MAGENTA << "[HEADER]" << RESET << " Header validation completed" << std::endl;
 }
 
 Header::~Header( void )
 {
     if (VERBOS) std::cout << BOLD_MAGENTA << "[HEADER]" << RESET << " Destroying header parser" << std::endl;
-}
-
-void Header::validate_headers( void )
-{
-    if (_headers.empty() || _headers.find("host") == _headers.end())
-        throw BadRequestException("Missing required Host header");
-    if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Required headers are present" << std::endl;
 }
 
 std::string &Header::getHeader( const std::string &key )
@@ -111,16 +103,12 @@ void Header::_header_pair_parser( const std::string &s, char del)
 
     std::string key = s.substr(0, pos);
     to_lower(key);
-    if (key.empty() || !is_valid_key(key)
-        || (key == "host" && _headers.find("host") != _headers.end())) {
+    if (key.empty() || !is_valid_key(key)) {
         throw BadRequestException("Invalid header format");
     }
 
     std::string value = trim(s.substr(pos + 1));
-    if (key == "host" && (value.empty() || has_any(value, " \t\r\n"))) {
-        throw BadRequestException("Invalid Host header value");
-    }
-    else if (has_any(value, "\r\n")) {
+    if (has_any(value, "\r\n")) {
         throw BadRequestException("Invalid header value");
     }
     
