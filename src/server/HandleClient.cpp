@@ -203,8 +203,10 @@ void Server::processRequest(int client_fd) {
     }
     
     // STEP 4: Switch to write mode
+    std::cout << "Prepared response for client " << client_fd << ", switching to write mode" << std::endl;
     struct epoll_event event;
     event.events = EPOLLOUT;
     event.data.fd = client_fd;
     epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
+    std::cout << "Client " << client_fd << " is now ready to send response" << std::endl;
 }
