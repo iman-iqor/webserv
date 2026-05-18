@@ -248,3 +248,8 @@ bool Request::extract_chunked_body( void )
 	}
 	return (true);
 }
+
+size_t Request::get_content_length( void ) const
+{
+	return _content_length;
+}

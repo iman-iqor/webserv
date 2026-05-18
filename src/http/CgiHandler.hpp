@@ -5,7 +5,13 @@
 #include <cstring>
 #include <map>
 #include <sys/types.h>
-#include "Client.hpp"
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <stdexcept>
+#include "../server/Server.hpp"
 
 /**
  * This struct holds the state of a CGI execution for a particular client. It includes:
@@ -26,12 +32,17 @@ typedef struct CgiState_s {
 class CgiHandler {
 public:
 	static char **build_envp(const std::map< std::string, std::string > &env_map);
-
 	static void free_envp(char **envp);
+
+    static void open_pipes(int fdi[2], int fdo[2]);
+    static void close_pipes(int fdi[2], int fdo[2]);
+
+    static char **build_args(const std::string &cgi_path, const std::string &bin_path);
+    static void free_args(char **argv);
 
 	static void set_non_blocking(int fd);
 
-	static void start(
+	static CgiState_t start(
 		Client *client,
 		const std::string &cgi_path,
 		std::string &bin_path,

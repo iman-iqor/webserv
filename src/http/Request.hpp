@@ -53,6 +53,8 @@ public:
 	bool extract_plain_body( void );
 	bool extract_chunked_body( void );
 
+	size_t get_content_length( void ) const;
+
     bool is_finished( void );
 	void validate( void );
 	void pre_validate( void );
