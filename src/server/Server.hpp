@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <signal.h>
 #include "../http/Request.hpp"
+#include"../http/Router.hpp"
 #include<set>
 #include <cstring> // for memset
 
@@ -49,7 +50,7 @@ private:
 
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock*> > fd_to_servers;
-
+    Router* router;
 public:
     Server(Config &config);
      ~Server();
@@ -61,6 +62,7 @@ public:
 
     void acceptClient(int listen_fd);
     void handleClient(EpollData* data, uint32_t events);
+    void handleCGI(EpollData* data,uint32_t events);
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);

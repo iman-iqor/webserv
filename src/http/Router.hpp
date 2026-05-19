@@ -2,7 +2,8 @@
 
 #ifndef ROUTER_HPP
 #define ROUTER_HPP
-
+#include <sys/stat.h>//for stat function to check if file exists and if it's a directory
+#include <dirent.h>//for opendir and readdir to list directory content
 #include"../server/Client.hpp"
 
 enum RouteAction
@@ -56,9 +57,9 @@ class Router
         Router(Config *config);
         RouteInfo route(const Request &request,ServerBlock* server_block);
 
-        RouteInfo roteGET(const Request &request,Location* location);
-        RouteInfo rotePOSTE(const Request &request,Location* location);
-        RouteInfo roteDELETE(const Request &request,Location* location);
+        RouteInfo routeGET(const Request &request,Location* location);
+        RouteInfo routePOST(const Request &request,Location* location);
+        RouteInfo routeDELETE(const Request &request,Location* location);
 };
 
 #endif
