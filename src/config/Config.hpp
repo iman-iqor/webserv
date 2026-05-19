@@ -22,7 +22,7 @@ struct Location {
     std::string path;
     std::string root;
     std::vector<std::string> methods;
-    std::string index;
+    std::string index;//this is for autoindex if the client request a directory and there is an index file we will serve it if not we will check if autoindex is on or off if it's on we will generate a directory listing if it's off we will return 403 forbidden
     bool autoindex;
     std::map<std::string, std::string> cgi; // this for cgi to support multiples languages
     std::string upload_path;

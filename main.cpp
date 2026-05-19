@@ -42,9 +42,7 @@ int main(int argc,char** argv)
         //oumaima
         Parser parser(configPath);
         Config config = parser.parse();
-        
-        
-        
+
         //imane
         Server server(config);
         server.setupSockets();
