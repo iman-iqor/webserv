@@ -62,6 +62,7 @@ public:
 
     void acceptClient(int listen_fd);
     void handleClient(EpollData* data, uint32_t events);
+    void handleCGI(EpollData* data,uint32_t events);
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);

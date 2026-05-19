@@ -18,7 +18,6 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
     route_info.headers.clear();
 
     route_info.location = findMatchingLocation(request.get_path());
-    std::cout<<"\033[31mhello\033[31m"<<request.get_method()<<std::endl;
 
     if(!route_info.location)//what should i do if i did not fin d thelocation ?
     {
@@ -82,6 +81,33 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
             std::string index_path = file_path;
             if(file_path[file_path.size()-1] != '/')
                 index_path += "/";
+            
+            index_path += location->index;
+
+            if(fileExists(index_path) && !isDirectory(index_path))
+            {
+                std::cout<<"\033[31mindex file found\033[31m"<<std::endl;
+                route_info.action = SERVE_FILE;
+                route_info.file_path = index_path;
+                route_info.http_status = 200;
+                route_info.status_message = "OK";
+                return route_info;
+            }
+
+            if(location->autoindex)
+            {
+                std::cout<<"\033[31mautoindex enabled\033[31m"<<std::endl;
+                route_info.action = DIRECTORY_LISTING;
+                route_info.file_path = file_path;
+                route_info.http_status  = 200;
+                route_info.status_message = "OK";
+                return route_info;
+            }
+
+            route_info.action = ERROR_403;
+            route_info.http_status = 403;
+            route_info.status_message = "Forbidden";
+            return route_info;
         }
         return route_info;  
     }

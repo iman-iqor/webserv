@@ -117,6 +117,8 @@ void Server::processRequest(int client_fd) {
     RouteInfo route = router->route(client->request, server_block);
     
     // ✅ STEP 3: HANDLE BASED ON ROUTE ACTION
+    std::cout<<"hi"<<std::endl;
+    std::cout<<route.action<<std::endl;
     switch (route.action) {
         
         case SERVE_FILE: {
