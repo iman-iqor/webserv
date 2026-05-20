@@ -53,6 +53,12 @@ class Router
         bool isDirectory(const std::string &path);
         bool isExecutable(const std::string &path);
         std::string getFileExtension(const std::string &path);
+
+        bool isUploadAllowed(Location* location);
+        std::string generateUploadFilename(const Request &request,Location* location);
+        std::string sizeToString(size_t value);
+        std::string timeToString(time_t value);
+
     public:
         Router(Config *config);
         RouteInfo route(const Request &request,ServerBlock* server_block);
