@@ -56,7 +56,7 @@ public:
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
 	//imane added this
-	std::string& getHeader(const std::string &name);
+	const std::string& getHeader(const std::string &name) const;
 	RequestState get_state( void ) const ;
 };
 

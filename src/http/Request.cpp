@@ -209,7 +209,7 @@ bool Request::extract_chunked_body( void )
 }
 
 //imane added this
-std::string& Request::getHeader(const std::string &name)
+const std::string& Request::getHeader(const std::string &name) const
 {
     return _headers->getHeader(name);
 }
