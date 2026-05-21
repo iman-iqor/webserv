@@ -163,6 +163,11 @@ void Server::processRequest(int client_fd) {
             client->response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
             break;
         }
+        //post by imane
+        case UPLOAD_FILE:
+        {
+            handleFileUpload(client_fd,route,client->request);
+        }
         
         case ERROR_404: {
             std::string error_body = "<html><body><h1>404 Not Found</h1></body></html>";

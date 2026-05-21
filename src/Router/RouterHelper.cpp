@@ -91,3 +91,9 @@ bool Router::isExecutable(const std::string &path)
 {
     return (access(path.c_str(),X_OK) == 0);
 }
+
+bool Router::isUploadAllowed(Location* location)
+{
+    if(!location) return false;
+    return !location->upload_path.empty();
+}

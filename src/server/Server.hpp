@@ -66,6 +66,7 @@ public:
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
+    void handleFileUpload(int client_fd,const RouteInfo &route,const Request &request);
 
     void closeClient(int fd);
 };

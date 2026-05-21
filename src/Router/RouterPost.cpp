@@ -12,7 +12,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     if (!content_length_str.empty())
     {
         size_t content_length = static_cast<size_t>(atoi(content_length_str.c_str()));
-        if (server_block && content_length > server_block->client_max_body_size)
+        if (server_block && static_cast<long>(content_length) > server_block->client_max_body_size)
         {
             route_info.action = ERROR_413;
             route_info.http_status = 413;
@@ -37,5 +37,23 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
             return route_info; 
         }
     }
+
+    //check if uploads are allowed
+    //router only decides if upload is alloowed
+    //the actual upload happens in server::processRequest
+    if(isUploadAllowed(location))
+    {
+        route_info.action = UPLOAD_FILE;
+        route_info.upload_dir = location->upload_path;
+        route_info.http_status = 201;//created
+        route_info.status_message = "created";
+        return route_info;
+    }
+
+    //post ot alloed
+    route_info.action = ERROR_405;
+    route_info.http_status = 405;
+    route_info.status_message = "Method Not Allowed";
+    
     return route_info;
 }

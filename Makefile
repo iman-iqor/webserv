@@ -20,6 +20,7 @@ SRC = \
 	src/server/Server.cpp \
 	src/server/AcceptClient.cpp \
 	src/server/HandleClient.cpp \
+	src/server/handleFileUpload.cpp \
 	src/server/HandleCGI.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
