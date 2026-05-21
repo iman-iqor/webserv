@@ -1,5 +1,5 @@
 #include "Router.hpp"
-
+#include <ctime>
 RouteInfo Router::routePOST(const Request &request, Location *location)
 {
     RouteInfo route_info;
@@ -56,4 +56,42 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     route_info.status_message = "Method Not Allowed";
     
     return route_info;
+}
+
+std::string Router::generateUploadFilename(const Request &request,Location* location)
+{
+   (void)location; 
+
+   //try to get filename from content-disposition
+   std::string disposition = request.getHeader("Content-Disposition");
+
+   if(!disposition.empty())
+   {
+        size_t filename_pos = disposition.find("filename=\"");
+
+        if(filename_pos != std::string::npos)
+        {
+            size_t start = filename_pos + 10;
+            size_t end = disposition.find("\"",start);
+            if(end != std::string::npos)
+            {
+                std::string filename = disposition.substr(start,end-start);
+            
+                //some security:remove path traversal attempts
+                //remove "/" from file\name
+                size_t slash_pos = filename.rfind('/');
+                if(slash_pos != std::string::npos)
+                    filename = filename.substr(slash_pos +1);
+                
+                //check for ".." path traversal
+                if(filename.find("..") != std::string::npos)
+                    return "";//reject malicious filename
+                
+                return filename;
+            }
+        }
+   }
+
+   //generaate default filename with timestamp
+   return "upload_" + timeToString(std::time(NULL));
 }

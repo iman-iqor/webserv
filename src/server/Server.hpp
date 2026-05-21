@@ -69,5 +69,6 @@ public:
     void handleFileUpload(int client_fd,const RouteInfo &route,const Request &request);
 
     void closeClient(int fd);
+    void switchToWrite(int client_fd);
 };
 #endif

@@ -213,3 +213,7 @@ const std::string& Request::getHeader(const std::string &name) const
 {
     return _headers->getHeader(name);
 }
+const std::string& Request::get_body(void) const
+{
+    return _body;
+}
