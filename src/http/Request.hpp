@@ -57,6 +57,7 @@ public:
 	const std::string& get_method( void ) const;
 	//imane added this
 	const std::string& getHeader(const std::string &name) const;
+	const std::string& get_body(void) const;
 	RequestState get_state( void ) const ;
 };
 

@@ -90,7 +90,7 @@ void Server::handleRead(Client *client)
     
 }
 
-std::string intToString(size_t n)
+static std::string intToString(size_t n)
 {
     std::stringstream s;
     s<<n;
@@ -167,6 +167,7 @@ void Server::processRequest(int client_fd) {
         case UPLOAD_FILE:
         {
             handleFileUpload(client_fd,route,client->request);
+            break;
         }
         
         case ERROR_404: {

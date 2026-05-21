@@ -97,3 +97,17 @@ bool Router::isUploadAllowed(Location* location)
     if(!location) return false;
     return !location->upload_path.empty();
 }
+
+std::string Router::sizeToString(size_t value)
+{
+    std::stringstream ss;
+    ss<<value;
+    return ss.str();
+}
+
+std::string Router::timeToString(time_t value)
+{
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
+}
