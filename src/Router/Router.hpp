@@ -12,6 +12,7 @@ enum RouteAction
     DIRECTORY_LISTING,//list the directory conntent and this when the auto index is on
     REDIRECT,//if the clients asked me about an old file i will send him a new path to visit with 301-302 redirect
     EXECUTE_CGI,//run scripts u sf + the methos could be post or get normal
+    UPLOAD_FILE,//i added this for post method if the location has an upload path i will save the file there
     ERROR_404,
     ERROR_403,
     ERROR_405,
@@ -30,7 +31,8 @@ struct RouteInfo
     RouteAction action;//what to do
     std::string file_path;//path of the file to server file actio
     std::string redirect_url;
-    std::string cgi_string;//script path for execute cgi
+    std::string cgi_string;//script path for execute cgi;
+     std::string upload_dir;   //for upload file action
     Location *location;//the location block that matched the request
     int http_status;
     std::string status_message;//ok or not found li  7bit

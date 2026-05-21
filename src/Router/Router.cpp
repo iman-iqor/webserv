@@ -50,8 +50,8 @@ RouteInfo Router::route(const Request &request,ServerBlock* server_block)
 
     if(method == "GET")
         return routeGET(request,route_info.location);
-    // else if(method == "POST")
-    //     return routePOST(request,route_info.location);
+    else if(method == "POST")
+        return routePOST(request,route_info.location);
     // else if(method  == "DELETE")
     //     return routeDELETE(request,route_info.location);
     
