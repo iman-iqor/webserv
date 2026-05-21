@@ -67,6 +67,7 @@ public:
     void handleWrite(Client *client);
     void processRequest(int client_fd);
     void handleFileUpload(int client_fd,const RouteInfo &route,const Request &request);
+    void handleDeleteFile(int client_fd, const RouteInfo &route);
 
     void closeClient(int fd);
     void switchToWrite(int client_fd);

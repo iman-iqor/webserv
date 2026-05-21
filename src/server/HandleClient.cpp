@@ -169,6 +169,11 @@ void Server::processRequest(int client_fd) {
             handleFileUpload(client_fd,route,client->request);
             break;
         }
+        //delete by imane
+        case DELETE_FILE:
+        {
+            handleDeleteFile(client_fd,route);
+        }
         
         case ERROR_404: {
             std::string error_body = "<html><body><h1>404 Not Found</h1></body></html>";
