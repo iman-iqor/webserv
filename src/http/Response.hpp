@@ -42,7 +42,7 @@ class Response
         std::string MimeType(const std::string &path);
         void handleRedirect(const RouteInfo &info);
         void handleCGI(CgiResponse_t& cgi_output, const std::map<int, std::string > error_pages);
-
+        
 };
 
 #endif
