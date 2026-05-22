@@ -17,37 +17,31 @@ uploaded files
 CGI output
 */
 
-static std::string intToString(size_t n)
-{
-    std::stringstream ss;
-    ss << n;
-    return ss.str();
-}
+
 
 void Server::handleFileUpload(int client_fd,const RouteInfo &route,const Request &request)
 {
+    std::cout<<"inside handle file upload"<<std::endl;
     Client *client = clients[client_fd];
 
     //get the directory i will upload in
     std::string upload_dir = route.upload_dir;
     if(upload_dir.empty() || upload_dir[upload_dir.length()-1] != '/')
-        upload_dir += "/";
-
+    upload_dir += "/";
+    
+    std::cout<<upload_dir<<std::endl;
     //generate a filename for the uploaded file and if it s empty i will create a secured one
     std::string filename = router->generateUploadFilename(request,route.location);
-    if(filename.empty())
-    {
-        std::stringstream ss;
-        ss << "upload_" << std::time(NULL);
-        filename = ss.str();
-    }
+    std::cout<<"file name from generte filename"<<filename<<std::endl;
+    
 
     //build full file pathh
     std::string full_path = upload_dir + filename;
+    std::cout<<"full path : "<<full_path<<std::endl;
 
     //get request body
     std::string body = request.get_body();
-
+    std::cout<<"the body "<<body<<std::endl;
     //write to disk
     std::ofstream file(full_path.c_str(),std::ios::binary);
     if(!file.is_open())
@@ -59,7 +53,6 @@ void Server::handleFileUpload(int client_fd,const RouteInfo &route,const Request
         client->response += "\r\n";
         client->response += body;
 
-        // switchToWrite(client_fd);
         return;
     }
 
@@ -76,7 +69,6 @@ void Server::handleFileUpload(int client_fd,const RouteInfo &route,const Request
         client->response += "\r\n";
         client->response += body;
 
-        // switchToWrite(client_fd);
         return;
 
     }

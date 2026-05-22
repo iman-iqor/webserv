@@ -90,7 +90,7 @@ void Server::handleRead(Client *client)
     
 }
 
-static std::string intToString(size_t n)
+std::string Server::intToString(size_t n)
 {
     std::stringstream s;
     s<<n;
@@ -173,6 +173,7 @@ void Server::processRequest(int client_fd) {
         case DELETE_FILE:
         {
             handleDeleteFile(client_fd,route);
+            break;
         }
         
         case ERROR_404: {

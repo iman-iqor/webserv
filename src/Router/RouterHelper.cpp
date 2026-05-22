@@ -51,7 +51,7 @@ std::string Router::resolveFilePath(const std::string &path,Location *location)
     std::string relative_path = path;
     if(path.find(location->path) == 0)
     {
-        std::cout<<"dkhal"<<std::endl;
+        
         relative_path = path.substr(location->path.length());
         if(relative_path.empty())
         {
@@ -61,7 +61,7 @@ std::string Router::resolveFilePath(const std::string &path,Location *location)
     }
     std::cout<<"relative path: "<<relative_path<<std::endl;
     std::string full_path = location->root + "/" + relative_path;
-
+    std::cout<<"full path: "<<full_path<<std::endl;
     return full_path;
 }
 

@@ -68,8 +68,11 @@ public:
     void processRequest(int client_fd);
     void handleFileUpload(int client_fd,const RouteInfo &route,const Request &request);
     void handleDeleteFile(int client_fd, const RouteInfo &route);
+    std::string buildErrorResponse(int code, const std::string &message);
 
     void closeClient(int fd);
     void switchToWrite(int client_fd);
+    std::string intToString(size_t n);
+
 };
 #endif
