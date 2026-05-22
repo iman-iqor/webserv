@@ -90,7 +90,7 @@ void Server::handleRead(Client *client)
     
 }
 
-static std::string intToString(size_t n)
+std::string Server::intToString(size_t n)
 {
     std::stringstream s;
     s<<n;
@@ -167,6 +167,12 @@ void Server::processRequest(int client_fd) {
         case UPLOAD_FILE:
         {
             handleFileUpload(client_fd,route,client->request);
+            break;
+        }
+        //delete by imane
+        case DELETE_FILE:
+        {
+            handleDeleteFile(client_fd,route);
             break;
         }
         

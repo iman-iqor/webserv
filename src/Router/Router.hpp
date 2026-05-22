@@ -13,6 +13,7 @@ enum RouteAction
     REDIRECT,//if the clients asked me about an old file i will send him a new path to visit with 301-302 redirect
     EXECUTE_CGI,//run scripts u sf + the methos could be post or get normal
     UPLOAD_FILE,//i added this for post method if the location has an upload path i will save the file there
+    DELETE_FILE,//for delete method if the file exists and the method is allowed i will delete it and return 200 ok if not i will return the appropriate error code
     ERROR_404,
     ERROR_403,
     ERROR_405,
