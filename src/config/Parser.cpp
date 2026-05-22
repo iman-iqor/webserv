@@ -219,6 +219,7 @@ void Parser::parseLocation(ServerBlock &server)
     Location loc;
     loc.root = server.root;
     loc.path = tokens[i].value;
+    loc.return_url = "";
     i++;
     if(i >= tokens.size() || tokens[i].type != OPEN_BRACE)
         throw std::runtime_error("expected '{ ' for location block");
