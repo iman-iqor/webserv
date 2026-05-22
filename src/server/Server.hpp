@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <signal.h>
 #include "../http/Request.hpp"
+#include "../http/Response.hpp"
+
 #include"../Router/Router.hpp"
 #include<set>
 #include <cstring> // for memset
@@ -47,7 +49,7 @@ private:
 
     std::vector<int> listen_fds;
     int epoll_fd;
-
+    
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock*> > fd_to_servers;
     Router* router;
