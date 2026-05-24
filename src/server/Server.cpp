@@ -4,6 +4,7 @@
 Server::Server(Config &config)
 {
 	this->config = config;
+	router = new Router(&config);
 	epoll_fd = -1; // Initialize epoll_fd to an invalid value
 }
 
@@ -33,6 +34,8 @@ Server::~Server()
 	{
 		close(epoll_fd);
 	}
+	if(router)
+		delete router;
 
 	std::cout << "Server shut down cleanly" << std::endl;
 }
@@ -93,13 +96,6 @@ void Server::start()
 			{
 				handleClientError(clients[events[i].data.fd], e); // Handle HTTP exceptions that may occur during event processing, such as bad requests or internal server errors, by sending appropriate HTTP responses to the client and closing the connection if necessary
 			}
-			// catch (const BadRequestException &e)
-			// {
-			// 	std::string res = "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n"; // Prepare a simple HTTP 400 Bad Request response to send back to the client when a bad request is encountered
-			// 	std::cerr << "Bad request: " << e.what() << std::endl;
-			// 	send(events[i].data.fd, res.c_str(), res.length(), 0); // Send a simple HTTP 400 Bad Request response to the client to inform them of the issue with their request before closing the connection
-			// 	closeClient(events[i].data.fd); // Close the client connection if a bad request is encountered to free up resources and prevent further issues with that client
-			// }
 			catch(const std::exception &e)
 			{
 				std::cerr << "Error handling event: " << e.what() << std::endl;
@@ -116,8 +112,10 @@ void Server::handleEvent(struct epoll_event &event)
 
 	if (data->type == SERVER) // Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
 		acceptClient(fd);
-	else
+	else if(data->type == CLIENT)
 		handleClient(data, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
+	else if(data->type == CGI_PIPE)
+		handleCGI(data,event.events);
 }
 
 

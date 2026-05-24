@@ -26,6 +26,7 @@ void Server::handleWrite(Client *client)
 {
     // Client *client = clients[client_fd];
 
+    // std::cout<<"hey i m closing client"<<std::endl;
     if (client->response.empty()) {
         closeClient(client->fd);
         return;
@@ -89,27 +90,47 @@ void Server::handleRead(Client *client)
     
 }
 
-void Server::processRequest(int client_fd)
+std::string Server::intToString(size_t n)
 {
+    std::stringstream s;
+    s<<n;
+    return s.str();
+}
+
+void Server::processRequest(int client_fd) {
     Client *client = clients[client_fd];
-
-    // 🔥 MOCK RESPONSE
-    client->response =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
-        "Content-Length: 13\r\n"
-        "\r\n"
-        "Hello World!\n";
-
-    // switch to write mode
+    
+    // STEP 1: Get the server block for this client
+    ServerBlock* server_block = NULL;
+    if (fd_to_servers.find(client->listen_fd) != fd_to_servers.end()) {
+        if (fd_to_servers[client->listen_fd].size() > 0) {
+            server_block = fd_to_servers[client->listen_fd][0];
+        }
+    }
+    
+    if (!server_block) {
+        // No server config found
+        client->response = "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\n\r\n";
+        return;
+    }
+    
+    // ✅ STEP 2: USE ROUTER TO DETERMINE ACTION
+    RouteInfo route = router->route(client->request, server_block);
+    
+    // ✅ STEP 3: HANDLE BASED ON ROUTE ACTION
+    Response res(*this);
+    res.handleResponse(client_fd, route, server_block->error_pages, client);
+    client->response = res.build();
+    
+    // STEP 4: Switch to write mode
+    std::cout << "\033[32mPrepared response for client " << client_fd << ", switching to write mode\033[0m" << std::endl;
     struct epoll_event event;
-    event.events = EPOLLOUT;
     EpollData* data = new EpollData;
-    data->fd = client_fd;
+    data->fd=client_fd;
     data->type = CLIENT;
-    data->client = client;
+    data->client=client;
     event.data.ptr = data;
-
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event) == -1)
-        throw std::runtime_error("epoll_ctl MOD failed");
+    event.events = EPOLLOUT;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
+    std::cout << "\033[32mClient " << client_fd << " is now ready to send response\033[0m" << std::endl;
 }

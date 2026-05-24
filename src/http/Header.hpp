@@ -24,8 +24,6 @@ public:
     Header( std::string &s );
     ~Header( void );
 
-    void validate_headers( void );
-
     std::string& getHeader( const std::string &key );
     std::string& getCookie( const std::string &key );
     bool hasHeader( const std::string &key ) const;

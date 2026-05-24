@@ -46,7 +46,7 @@ Rules:
 - No spaces inside components
 
 Errors:
-- Invalid → 400 Bad Request or 301
+- Invalid → 400  or 301
 - Unknown method → 501
 - URI too long → 414
 

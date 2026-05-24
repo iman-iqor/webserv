@@ -25,7 +25,6 @@ class Request {
 	std::string _path;
     std::string _http_version;
     std::string _body;
-	ServerBlock* _server_block;
 	Location *_location;
 
     size_t _pos;
@@ -40,7 +39,6 @@ class Request {
 	
 	
 public:
-	std::vector< ServerBlock* > *sv_blocks;
 	Request( void );
 	~Request( void );
     void _parser( void );
@@ -56,16 +54,12 @@ public:
 	size_t get_content_length( void ) const;
 
     bool is_finished( void );
-	void validate( void );
-	void pre_validate( void );
 
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
-	void set_server_block(std::vector<ServerBlock *> *server_blocks);
-	ServerBlock *get_server_block( void ) const;
-
-	bool is_method_supported(const std::string& method) const;
-
+	//imane added this
+	const std::string& getHeader(const std::string &name) const;
+	const std::string& get_body(void) const;
 	RequestState get_state( void ) const ;
 };
 

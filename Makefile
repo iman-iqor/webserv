@@ -12,11 +12,18 @@ SRC = \
 	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
-	src/http/Router.cpp \
-	src/http/RouterHelper.cpp \
+	src/Router/Router.cpp \
+	src/Router/RouterHelper.cpp \
+	src/Router/RouterGet.cpp \
+	src/Router/RouterPost.cpp \
+	src/Router/RouterDelete.cpp \
 	src/server/Server.cpp \
 	src/server/AcceptClient.cpp \
 	src/server/HandleClient.cpp \
+	src/server/handleFileUpload.cpp \
+	src/server/handleDeleteFile.cpp \
+	src/server/buildResponse.cpp \
+	src/server/HandleCGI.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
 	src/utils/string_utils.cpp \

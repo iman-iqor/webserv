@@ -9,7 +9,7 @@ void Server::acceptClient(int listen_fd)
         return;
     }
 
-    clients[client_fd] = new Client(listen_fd, client_fd, &fd_to_servers[listen_fd]);// Create a new Client object for the accepted client connection and store it in the clients map using the client file descriptor as the key, allowing the server to manage and track the state of each connected client separately.
+    clients[client_fd] = new Client(listen_fd, client_fd);// Create a new Client object for the accepted client connection and store it in the clients map using the client file descriptor as the key, allowing the server to manage and track the state of each connected client separately.
 
     struct epoll_event event;
     event.events = EPOLLIN;

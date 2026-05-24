@@ -15,7 +15,6 @@ Request::Request( void )
 	_state = READ_START_LINE;
 	_method = "";
 	_path = "";
-	_server_block = NULL;
 	_headers = NULL;
 	_pos = 0;
 	_content_length = 0;
@@ -46,29 +45,6 @@ const std::string& Request::get_path( void ) const
 const std::string& Request::get_method( void ) const
 {
 	return _method;
-}
-
-void Request::set_server_block(std::vector<ServerBlock *> *server_blocks)
-{
-	(void) server_blocks;
-	std::string host = _headers->getHeader("host");
-	if (VERBOS) std::cout << CYAN << "[REQUEST]" << RESET << " Looking for server block host=" << host << std::endl;
-	for (size_t i = 0; i < sv_blocks->size(); ++i) {
-		std::vector<std::string> &names = (*sv_blocks)[i]->server_names;
-		for (size_t j = 0; j < names.size(); j++) {
-			if (names[j] == host) {
-				if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Server block found: " << GREEN << host << RESET << std::endl;
-				_server_block = (*sv_blocks)[i];
-				return ;
-			}
-		}
-	}
-	throw BadRequestException("No server block found");
-}
-
-ServerBlock *Request::get_server_block( void ) const
-{
-	return _server_block;
 }
 
 void Request::append_to_buffer( const char *s )
@@ -165,24 +141,7 @@ bool Request::extract_headers( void )
 	_buffer = _buffer.substr(_pos);
 	_pos = 0;
 
-	set_server_block(sv_blocks);
-	pre_validate();
-
 	return (true);
-}
-
-bool Request::is_method_supported(const std::string& method) const
-{
-	return (std::find(_location->methods.begin(), _location->methods.end(), method) != _location->methods.end());
-}
-
-void Request::pre_validate( void )
-{
-	_location = find_location(_server_block, _path);
-	if (_location == NULL)
-		throw NotFoundException("No matching location found for path: " + _path);
-	if (!is_method_supported(_method))
-		throw MethodNotAllowedException("Method not supported: " + _method);
 }
 
 RequestState Request::get_state( void ) const
@@ -252,4 +211,15 @@ bool Request::extract_chunked_body( void )
 size_t Request::get_content_length( void ) const
 {
 	return _content_length;
+}
+
+//imane added this
+const std::string& Request::getHeader(const std::string &name) const
+{
+    return _headers->getHeader(name);
+}
+
+const std::string& Request::get_body(void) const
+{
+    return _body;
 }
