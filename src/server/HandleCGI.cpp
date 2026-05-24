@@ -78,7 +78,7 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		close(data->fd);
 		close_pipes(cgi_state);
 		kill(cgi_state->pid, SIGKILL);
-		waitpid(cgi_state->pid, NULL, 0);
+		waitpid(cgi_state->pid, NULL, WNOHANG);
 		delete data;
 		delete cgi_state;
 		client->cgi_state = NULL;
@@ -105,7 +105,8 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 				cgi_state->res_r_fd = -1;
 			}
 			cgi_state->ready_to_send = true;
-			// client->response = parse_cgi_response(cgi_state->cgi_output);
+			// CgiResponse_t *cgi_response = parse_cgi_response(cgi_state->cgi_output);
+			// TODO: handle CGI response (build HTTP response and send to client)
 			client->ready_to_send = true;
 		}
 		else
@@ -155,13 +156,14 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 			cgi_state->req_w_fd = -1;
 		}
 		
-		// Wait for CGI child process to finish
+		// Wait for CGI child process to finish (non-blocking)
 		int status;
-		waitpid(cgi_state->pid, &status, 0);
+		waitpid(cgi_state->pid, &status, WNOHANG);
 		
 		// Build response from CGI output
 		cgi_state->ready_to_send = true;
-		// client->response = parse_cgi_response(cgi_state->cgi_output);
+		// CgiResponse_t *cgi_response = parse_cgi_response(cgi_state->cgi_output);
+		// TODO: handle CGI response (build HTTP response and send to client)
 		client->ready_to_send = true;
 		
 		// Clean up EpollData
