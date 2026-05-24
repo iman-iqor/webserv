@@ -9,6 +9,8 @@
 #include <arpa/inet.h>  //this is for inet_pton function to convert IP addresses
 #include <fcntl.h>      //this is for fcntl system call to set non-blocking mode
 #include <unistd.h>     //this is for close system call
+#include <signal.h>     //this is for signal handling (kill)
+#include <sys/wait.h>   //this is for wait functions (waitpid)
 #include <fstream>      //this is for file operations
 #include <sstream>      //this is for stringstream to build error messages
 #include <exception>
@@ -17,6 +19,8 @@
 #include<set>
 
 #include "../config/Config.hpp"
+
+typedef struct CgiState_s CgiState_t;
 
 class Client
 {
@@ -31,6 +35,8 @@ public:
     Request request;
     bool request_complete;
     bool ready_to_send;
+    
+    CgiState_t *cgi_state; // state for CGI execution
 
     Client(int listen_fd, int client_fd);
     ~Client();

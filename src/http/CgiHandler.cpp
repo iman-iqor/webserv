@@ -32,19 +32,11 @@ void CgiHandler::set_non_blocking(int fd) {
 	}
 }
 
-void CgiHandler::close_pipes(int fdi[2], int fdo[2]) {
-	if (fdi[0] != -1) close(fdi[0]);
-	if (fdi[1] != -1) close(fdi[1]);
-	if (fdo[0] != -1) close(fdo[0]);
-	if (fdo[1] != -1) close(fdo[1]);
-}
-
-void CgiHandler::open_pipes(int fdi[2], int fdo[2])
-{
-	if (pipe(fdi) == -1 || pipe(fdo) == -1) {
-		CgiHandler::close_pipes(fdi, fdo);
-		throw std::runtime_error("pipe error");
-	}
+void close_pipes(CgiState_t *cgi_state) {
+	if (cgi_state->fdi[0] != -1) close(cgi_state->fdi[0]);
+	if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
+	if (cgi_state->fdo[0] != -1) close(cgi_state->fdo[0]);
+	if (cgi_state->fdo[1] != -1) close(cgi_state->fdo[1]);
 }
 
 char **CgiHandler::build_args(const std::string &cgi_path, const std::string &bin_path) {
@@ -64,90 +56,127 @@ void CgiHandler::free_args(char **argv) {
 	delete[] argv;
 }
 
-CgiState_t CgiHandler::start(
+void open_pipe(CgiState_t *cgi_state, int fds[2])
+{
+	if (pipe(fds) == -1) {
+		close_pipes(cgi_state);
+		throw std::runtime_error("pipe error");
+	}
+}
+
+CgiState_t *CgiHandler::start(
 	Client *client,
 	const std::string &cgi_path,
 	std::string &bin_path,
 	int epoll_fd,
 	const std::map< std::string, std::string > &env_map
 ) {
-	int req_pipe[2] = {-1, -1};
-	int res_pipe[2] = {-1, -1};
+	CgiState_t *cgi_state = new CgiState_t;
+	cgi_state->fdo[0] = -1;
+	cgi_state->fdo[1] = -1;
+	cgi_state->fdi[0] = -1;
+	cgi_state->fdi[1] = -1;
+	cgi_state->pid = -1;
+	cgi_state->req_w_fd = -1;
+	cgi_state->res_r_fd = -1;
+	cgi_state->cgi_output = "";
+	cgi_state->body_sent = 0;
+	cgi_state->ready_to_send = false;
 
-	open_pipes(req_pipe, res_pipe);
+	if (!cgi_state) {
+		throw std::runtime_error("Failed to allocate memory for CGI state");
+	}
+	bool is_post_with_body = (client->request.get_method() == "POST" && client->request.get_content_length() > 0);
+
+	open_pipe(cgi_state, cgi_state->fdo); // Always open the output pipe for CGI response
+	if (is_post_with_body) {
+		open_pipe(cgi_state, cgi_state->fdi);
+	}
 
 	pid_t pid = fork();
 	if (pid < 0) {
-		close_pipes(req_pipe, res_pipe);
+		close_pipes(cgi_state);
 		throw std::runtime_error("fork error");
 	}
 
 	else if (pid == 0) { // Child process
-		close(req_pipe[1]);	// close write end of request pipe in child 
-		close(res_pipe[0]);	// close read end of response pipe in child
-
-		dup2(req_pipe[0], STDIN_FILENO);
-		dup2(res_pipe[1], STDOUT_FILENO);
+		int null_fd = open("/dev/null", O_RDONLY);
+		if (null_fd == -1) {
+			close_pipes(cgi_state);
+			throw std::runtime_error("Failed to open /dev/null");
+		}
+		if (is_post_with_body) {
+			dup2(cgi_state->fdi[0], STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
+			dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
+			dup2(null_fd, STDERR_FILENO); // Redirect CGI child's stderr to /dev/null if there's no request body
+			close(null_fd);
+		} else {
+			dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
+			dup2(null_fd, STDERR_FILENO); // Redirect CGI child's stderr to /dev/null if there's no request body
+			close(null_fd);
+		}
 
 		char **envp = build_envp(env_map);
 		char **argv = build_args(cgi_path, bin_path);
 		execve(bin_path.c_str(), argv, envp);
 		free_envp(envp);
 		free_args(argv);
+		// WARNING: more cleaning needed
 		exit(1); // If exec fails
 	}
 
 	// TODO: Check if all fd are closed
 	// parent process
-	close(req_pipe[0]);
+	if (is_post_with_body) {
+		close(cgi_state->fdi[0]); // close read end of request pipe in parent
+		set_non_blocking(cgi_state->fdi[1]);
+	} else {
+	}
+	close(cgi_state->fdo[1]); // close write end of response pipe in parent
 
-	set_non_blocking(res_pipe[0]);
+	set_non_blocking(cgi_state->fdo[0]);
 
-	// Add res_pipe[0] to epoll for monitoring CGI output
+	// Add fdo[0] to epoll for monitoring CGI output
 	struct epoll_event event;
 	event.events = EPOLLIN;
 	EpollData* data = new EpollData;
-	data->fd = res_pipe[0];
+	data->fd = cgi_state->fdo[0];
 	data->type = CGI_PIPE;
 	data->client = client;
 	event.data.ptr = data;
 
-	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, res_pipe[0], &event) == -1) {
-		close(req_pipe[1]), close(res_pipe[0]);
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdo[0], &event) == -1) {
+		if (is_post_with_body && cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
+		close(cgi_state->fdo[0]);
 		kill(pid, SIGKILL);
 		delete data;
 		throw std::runtime_error("epoll_ctl error");
 	}
 
-	if (client->request.get_method() == "POST" && client->request.get_content_length() > 0) {
+	if (is_post_with_body) {
 		// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
-		set_non_blocking(req_pipe[1]);
+		set_non_blocking(cgi_state->fdi[1]);
 		struct epoll_event req_event;
 		req_event.events = EPOLLOUT;
 		EpollData* req_data = new EpollData;
-		req_data->fd = req_pipe[1];
+		req_data->fd = cgi_state->fdi[1];
 		req_data->type = CGI_PIPE;
 		req_data->client = client;
 		req_event.data.ptr = req_data;
 
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, req_pipe[1], &req_event) == -1) {
-			close(req_pipe[1]), close(res_pipe[0]);
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {
+			if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
+			close(cgi_state->fdo[0]);
 			kill(pid, SIGKILL);
 			delete data;
 			delete req_data;
 			throw std::runtime_error("epoll_ctl error");
 		}
 	}
-	else
-		close(req_pipe[1]); // No body to send, close write end of request pipe in parent
 
-	CgiState_t cgi_state = {
-		.pid = pid,
-		.req_w_fd = req_pipe[1],
-		.res_r_fd = res_pipe[0],
-		.cgi_output = "",
-		.body_sent = 0,
-		.ready_to_send = false
-	};
+	// Update cgi_state with the fork result and return
+	cgi_state->pid = pid;
+	cgi_state->req_w_fd = cgi_state->fdi[1];
+	cgi_state->res_r_fd = cgi_state->fdo[0];
 	return cgi_state;
 }
