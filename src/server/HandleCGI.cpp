@@ -41,16 +41,23 @@ CgiResponse_t *parse_cgi_response(const std::string &cgi_output) {
 		std::string lkey = key;
 		to_lower(lkey);
 		if (lkey == "status") {
-			if (value.find_first_not_of("0123456789") != std::string::npos) {
-				delete response;
-				throw BadGatewayException("Invalid CGI response: non-numeric status code");
+			// Parse status line: e.g., "200 OK" or just "200"
+			size_t space_pos = value.find(' ');
+			if (space_pos != std::string::npos) {
+				std::string code_str = value.substr(0, space_pos);
+				if (code_str.find_first_not_of("0123456789") != std::string::npos) {
+					delete response;
+					throw BadGatewayException("Invalid CGI response: non-numeric status code");
+				}
+				response->status_code = std::atoi(code_str.c_str());
+				response->status_message = value.substr(space_pos + 1);
+			} else {
+				response->status_code = std::atoi(value.c_str());
+				// Keep default status message
 			}
-			response->status_code = std::atoi(value.c_str());
 		}
-		else {
-			if (lkey != "content-type") {
-				response->headers[key] = value;
-			}
+		else if (lkey != "content-type") {
+			response->headers[key] = value;
 		}
 	}
 	return response;
