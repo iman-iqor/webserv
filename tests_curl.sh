@@ -69,9 +69,9 @@ declare -a TESTS=(
     "POST with larger body (1KB)|curl -X POST -v ${SERVER}/upload -H 'Content-Length: 1024' -d \"$(head -c 1024 /dev/zero | tr '\0' 'a')\" 2>&1|201"
     
     # === DELETE REQUESTS ===
-    "DELETE to /file (allowed)|curl -X DELETE -v ${SERVER}/file 2>&1|204"
+    "DELETE to /tmp file (allowed)|bash -c 'file=/tmp/webserv_delete_test_file; printf hello > "$file"; curl -X DELETE -v ${SERVER}/tmp/webserv_delete_test_file 2>&1; test ! -e "$file"'|204"
     "DELETE to / (method not allowed)|curl -X DELETE -v ${SERVER}/ 2>&1|405"
-    "DELETE with query string|curl -X DELETE -v '${SERVER}/file?id=123' 2>&1|204"
+    "DELETE missing file (404)|curl -X DELETE -v ${SERVER}/tmp/does-not-exist 2>&1|404"
     
     # === PUT REQUESTS ===
     "PUT to / (not implemented)|curl -X PUT -v ${SERVER}/ 2>&1|501"
@@ -187,6 +187,18 @@ run_test() {
     # Handle timeout
     if [ $exit_code -eq 124 ]; then
         echo -e "${RED}✗ TIMEOUT${NC} (No response within ${TIMEOUT}s)"
+        if [ "$VERBOSE_FAILED" = true ] || [ "$VERBOSE_ALL" = true ]; then
+            echo -e "${RED}Response:${NC}"
+            echo "$response" | head -20
+        fi
+        echo ""
+        ((FAILED++))
+        echo -e "${BLUE}────────────────────────────────────────────────────────────${NC}"
+        return
+    fi
+
+    if [ $exit_code -ne 0 ]; then
+        echo -e "${RED}✗ COMMAND FAILED${NC} (Exit code: $exit_code)"
         if [ "$VERBOSE_FAILED" = true ] || [ "$VERBOSE_ALL" = true ]; then
             echo -e "${RED}Response:${NC}"
             echo "$response" | head -20
