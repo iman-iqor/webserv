@@ -31,7 +31,7 @@ enum FDType
 {
     SERVER,
     CLIENT,
-    CGI
+    CGI_PIPE
 };
 
 struct EpollData

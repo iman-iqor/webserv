@@ -208,11 +208,17 @@ bool Request::extract_chunked_body( void )
 	return (true);
 }
 
+size_t Request::get_content_length( void ) const
+{
+	return _content_length;
+}
+
 //imane added this
 const std::string& Request::getHeader(const std::string &name) const
 {
     return _headers->getHeader(name);
 }
+
 const std::string& Request::get_body(void) const
 {
     return _body;

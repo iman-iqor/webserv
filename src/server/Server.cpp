@@ -114,7 +114,7 @@ void Server::handleEvent(struct epoll_event &event)
 		acceptClient(fd);
 	else if(data->type == CLIENT)
 		handleClient(data, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
-	else if(data->type == CGI)
+	else if(data->type == CGI_PIPE)
 		handleCGI(data,event.events);
 }
 

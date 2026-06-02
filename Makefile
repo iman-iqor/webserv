@@ -1,5 +1,3 @@
-
-
 NAME = webserv
 
 CXX = c++
@@ -12,6 +10,7 @@ SRC = \
 	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
+	src/http/CgiHandler.cpp \
 	src/Router/Router.cpp \
 	src/Router/RouterHelper.cpp \
 	src/Router/RouterGet.cpp \
@@ -30,7 +29,8 @@ SRC = \
 	src/utils/location_tool.cpp \
 	src/utils/request_utils.cpp
 
-OBJ = $(SRC:.cpp=.o)
+OBJ_DIR = obj_file
+OBJ = $(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
 
 
 all: $(NAME)
@@ -38,11 +38,16 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
-%.o: %.cpp
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+run: all
+	clear
+	./webserv config.conf
+
 clean:
-	rm -f $(OBJ)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(NAME)
