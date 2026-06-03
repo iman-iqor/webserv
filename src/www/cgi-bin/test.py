@@ -21,7 +21,7 @@ def main():
         body { font-family: sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 600px; }
         h1 { color: #007acc; }
-        table { width: 100 percent; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
     </style>
@@ -48,4 +48,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

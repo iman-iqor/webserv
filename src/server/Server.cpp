@@ -1,17 +1,16 @@
 #include "Server.hpp"
 
-
 Server::Server(Config &config)
 {
 	this->config = config;
 	router = new Router(&config);
-	epoll_fd = -1; // Initialize epoll_fd to an invalid value
+	epoll_fd = -1;
 }
 
-// Server.cpp
+// Close all client connections and free resources associated with them
+// Remove all listen sockets from epoll
 Server::~Server()
 {
-	// Close all client connections
 	for (std::map<int, Client *>::iterator it = clients.begin();
 		 it != clients.end(); ++it)
 	{
@@ -21,7 +20,6 @@ Server::~Server()
 	}
 	clients.clear();
 
-	// Remove all listen sockets from epoll
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
 		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, listen_fds[i], NULL);
@@ -29,56 +27,54 @@ Server::~Server()
 	}
 	listen_fds.clear();
 
-	
 	if (epoll_fd != -1)
 	{
 		close(epoll_fd);
 	}
-	if(router)
+	if (router)
 		delete router;
 
 	std::cout << "Server shut down cleanly" << std::endl;
 }
 void Server::initEpoll()
 {
-	epoll_fd = epoll_create1(0); // Create an epoll instance and get a file descriptor for it to monitor events on multiple file descriptors efficiently
+	epoll_fd = epoll_create1(0);
 	if (epoll_fd == -1)
 		throw std::runtime_error("epoll_create1 failed");
 
 	struct epoll_event event;
 	event.events = EPOLLIN;
-	
+
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		EpollData* data = new EpollData; // TODO: why inside the loop but not outside? because we need a separate EpollData structure for each listening socket to store its file descriptor and type, allowing the server to differentiate between events on different listening sockets when they occur. If we used a single EpollData structure outside the loop, it would be overwritten with the last listening socket's information, making it impossible to correctly identify which socket an event is associated with when handling events in the main loop.
+		EpollData *data = new EpollData;
 		data->fd = listen_fds[i];
 		data->type = SERVER;
 		data->client = NULL;
-		event.data.ptr = data; // We can use the data.ptr to store a pointer to a structure containing additional information about the event, such as the type of event or associated data, which can be useful for handling different types of events in a more flexible way.
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1) // Register the listening socket with the epoll instance to monitor for incoming connections
+		event.data.ptr = data;
+		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1)
 			throw std::runtime_error("epoll_ctl ADD failed");
 	}
 }
 
 void handleClientError(Client *client, const HttpException &e)
 {
-    if (!client)
-        return;
-    std::ostringstream oss;
-    oss << "HTTP/1.1 " << e.statusCode << " " << e.statusMessage << "\r\nContent-Length: 0\r\n\r\n";
-    std::string res = oss.str();
-    std::cerr << RED << "[" << e.statusMessage << "] " << RESET << e.what() << std::endl;
-    send(client->fd, res.c_str(), res.length(), 0);
+	if (!client)
+		return;
+	std::ostringstream oss;
+	oss << "HTTP/1.1 " << e.statusCode << " " << e.statusMessage << "\r\nContent-Length: 0\r\n\r\n";
+	std::string res = oss.str();
+	std::cerr << RED << "[" << e.statusMessage << "] " << RESET << e.what() << std::endl;
+	send(client->fd, res.c_str(), res.length(), 0);
 }
 
 void Server::start()
 {
-	struct epoll_event events[1024]; // Array to hold events returned by epoll_wait
+	struct epoll_event events[1024];
 
-	while (!g_shutdown) // Main server loop that continues running until a shutdown signal is received, allowing the server to handle incoming connections and client activity continuously
+	while (!g_shutdown)
 	{
-		int nfds = epoll_wait(epoll_fd, events, 1024, -1); // Wait for events on the monitored file descriptors, blocking indefinitely until at least one event occurs. The events are stored in the events array, and nfds indicates how many events were returned.
-
+		int nfds = epoll_wait(epoll_fd, events, 1024, -1);
 		if (nfds < 0)
 		{
 			if (errno == EINTR)
@@ -90,49 +86,41 @@ void Server::start()
 		{
 			try
 			{
-				handleEvent(events[i]); // Handle each event returned by epoll_wait, which could be a new incoming connection or activity on an existing client socket
+				handleEvent(events[i]);
 			}
 			catch (const HttpException &e)
 			{
-				handleClientError(clients[events[i].data.fd], e); // Handle HTTP exceptions that may occur during event processing, such as bad requests or internal server errors, by sending appropriate HTTP responses to the client and closing the connection if necessary
+				handleClientError(clients[events[i].data.fd], e);
 			}
-			catch(const std::exception &e)
+			catch (const std::exception &e)
 			{
 				std::cerr << "Error handling event: " << e.what() << std::endl;
 			}
-			
 		}
 	}
 }
 
 void Server::handleEvent(struct epoll_event &event)
 {
-	EpollData* data = (EpollData*)event.data.ptr;
+	EpollData *data = (EpollData *)event.data.ptr;
 	int fd = data->fd;
 
-	if (data->type == SERVER) // Check if the event is on a listening socket, which indicates a new incoming connection or activity on an existing client socket and if so, accept the new client connection
+	if (data->type == SERVER)
 		acceptClient(fd);
-	else if(data->type == CLIENT)
-		handleClient(data, event.events); // Otherwise, handle activity on an existing client socket, such as reading a request or sending a response
-	else if(data->type == CGI_PIPE)
-		handleCGI(data,event.events);
+	else if (data->type == CLIENT)
+		handleClient(data, event.events);
+	else if (data->type == CGI_PIPE)
+		handleCGI(data, event.events);
 }
-
 
 void Server::closeClient(int fd)
 {
-	if (clients.find(fd) != clients.end()) // Check if the client exists in the clients map and if so, delete the Client object and remove it from the map to free up resources associated with that client
+	if (clients.find(fd) != clients.end())
 	{
-		delete clients[fd]; // Free the memory allocated for the Client object associated with the client file descriptor
-		clients.erase(fd);  // Remove the client from the clients map to free up resources associated with that client
+		delete clients[fd];
+		clients.erase(fd);
 	}
-	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL); // Unregister the client socket from the epoll instance to stop monitoring it for events, which is necessary when closing the client connection to prevent the server from trying to access an invalid file descriptor
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
 	std::cout << "Client disconnected: " << fd << std::endl;
 }
-
-
-
-
-
-

@@ -27,18 +27,18 @@ class Client
 public:
     int fd; // file descriptor for the client socket
 
-    std::string buffer;   // incoming request
-    std::string response; // outgoing response
-    int expected_body_size; // expected size of the request body, used for tracking how much of the body has been received so far
+    std::string buffer; 
+    std::string response;
+    int expected_body_size; 
 
-    int listen_fd;// file descriptor for the listening socket that accepted this client
+    int listen_fd;
     Request request;
     bool request_complete;
     bool ready_to_send;
     
-    CgiState_t *cgi_state; // state for CGI execution
+    CgiState_t *cgi_state;
 
     Client(int listen_fd, int client_fd);
     ~Client();
 };
-#endif // CLIENT_HPP
+#endif
