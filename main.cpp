@@ -10,10 +10,8 @@
 #include <csignal>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
 #include <unistd.h>
 
-// ✅ Global flag for signal handling
-volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit gracefully and perform necessary cleanup before terminating the process.
 
-// ✅ Signal handler
+volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit 
 void signalHandler(int signum) {
     (void)signum;  // Avoid unused parameter warning
     if (!g_shutdown)
@@ -41,19 +39,16 @@ int main(int argc,char** argv)
     }
     try
     {
-        std::signal(SIGINT, signalHandler);   // Ctrl+C
-        std::signal(SIGTERM, signalHandler);  // this is when the process receives a termination signal, allowing for graceful shutdown in various scenarios (e.g., system shutdown, kill command)
-        //oumaima
+        std::signal(SIGINT, signalHandler);   
+        std::signal(SIGTERM, signalHandler);  // this is when the process receives a termination signal, 
         Parser parser(configPath);
         Config config = parser.parse();
 
-        //imane
         Server server(config);
         server.setupSockets();
         server.initEpoll();
         server.start();
 
-        //redouane
     }
     catch(const std::exception &e)
     {
