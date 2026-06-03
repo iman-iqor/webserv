@@ -18,11 +18,11 @@
 #include "../http/Request.hpp"
 #include "../http/Response.hpp"
 
-#include"../Router/Router.hpp"
-#include<set>
+#include "../Router/Router.hpp"
+#include <set>
 #include <cstring> // for memset
 
-extern volatile sig_atomic_t g_shutdown; // Global flag to signal shutdown across the server, allowing for graceful termination of the main loop and cleanup of resources when a shutdown signal is received (e.g., SIGINT or SIGTERM)
+extern volatile sig_atomic_t g_shutdown;
 
 #include "../config/Config.hpp"
 #include "Client.hpp"
@@ -38,9 +38,8 @@ struct EpollData
 {
     int fd;
     FDType type;
-    Client* client;
+    Client *client;
 };
-
 
 class Server
 {
@@ -49,13 +48,14 @@ private:
 
     std::vector<int> listen_fds;
     int epoll_fd;
-    
+
     std::map<int, Client *> clients;
-    std::map<int, std::vector<ServerBlock*> > fd_to_servers;
-    Router* router;
+    std::map<int, std::vector<ServerBlock *> > fd_to_servers;
+    Router *router;
+
 public:
     Server(Config &config);
-     ~Server();
+    ~Server();
     void setupSockets();
     void initEpoll();
     void start();
@@ -63,18 +63,17 @@ public:
     void handleEvent(struct epoll_event &event);
 
     void acceptClient(int listen_fd);
-    void handleClient(EpollData* data, uint32_t events);
-    void handleCGI(EpollData* data,uint32_t events);
+    void handleClient(EpollData *data, uint32_t events);
+    void handleCGI(EpollData *data, uint32_t events);
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
-    void handleFileUpload(int client_fd,const RouteInfo &route,const Request &request);
+    void handleFileUpload(int client_fd, const RouteInfo &route, const Request &request);
     void handleDeleteFile(int client_fd, const RouteInfo &route);
     std::string buildErrorResponse(int code, const std::string &message);
 
     void closeClient(int fd);
     void switchToWrite(int client_fd);
     std::string intToString(size_t n);
-
 };
 #endif

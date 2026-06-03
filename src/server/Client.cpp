@@ -25,7 +25,7 @@ Client::~Client() {
         if (cgi_state->fdo[1] != -1) close(cgi_state->fdo[1]);
     }
     
-    // ✅ Clean up buffer and response
+    //Clean up buffer and response
     buffer.clear();
     response.clear();
 }

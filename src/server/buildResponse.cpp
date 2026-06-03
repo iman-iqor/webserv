@@ -1,6 +1,6 @@
-#include"Server.hpp"
+#include "Server.hpp"
 
-std::string Server::buildErrorResponse(int code,const std::string &message)
+std::string Server::buildErrorResponse(int code, const std::string &message)
 {
     std::string body;
 

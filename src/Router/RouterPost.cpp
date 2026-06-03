@@ -25,11 +25,11 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
 
     // check for CGI scripts cause post can trigger CGI a bro
     std::string extension = getFileExtension(file_path);
-    std::cout<<"extension: "<<extension<<std::endl;
+    std::cout << "extension: " << extension << std::endl;
 
     if (!location->cgi.empty() && location->cgi.count(extension) > 0)
     {
-        std::cout<<"inside cgi"<<std::endl;
+        std::cout << "inside cgi" << std::endl;
         if (fileExists(file_path) && isExecutable(file_path))
         {
             // execute cgi with post data
@@ -46,7 +46,6 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     // the actual upload happens in server::processRequest
     if (isUploadAllowed(location))
     {
-        std::cout<<"upload allowed"<<std::endl;
         route_info.action = UPLOAD_FILE;
         route_info.upload_dir = location->upload_path;
         route_info.http_status = 201; // created
@@ -67,7 +66,7 @@ std::string Router::generateUploadFilename(const Request &request, Location *loc
     (void)location;
 
     // try to get filename from content-disposition
-    
+
     try
     {
         std::string disposition = request.getHeader("Content-Disposition");
@@ -104,6 +103,5 @@ std::string Router::generateUploadFilename(const Request &request, Location *loc
         (void)e;
     }
 
-    // generaate default filename with timestamp
     return "upload_" + timeToString(std::time(NULL));
 }
