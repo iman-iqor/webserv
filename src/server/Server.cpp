@@ -90,7 +90,18 @@ void Server::start()
 			}
 			catch (const HttpException &e)
 			{
-				handleClientError(clients[events[i].data.fd], e);
+				// events[i].data.fd is not valid when we stored a pointer in data.ptr.
+				// Retrieve the EpollData pointer and use its fd to find the client.
+				EpollData *ed = NULL;
+				if (events[i].data.ptr)
+					ed = static_cast<EpollData *>(events[i].data.ptr);
+				int client_fd = (ed ? ed->fd : -1);
+				Client *client_ptr = NULL;
+				if (client_fd != -1 && clients.find(client_fd) != clients.end())
+					client_ptr = clients[client_fd];
+				handleClientError(client_ptr, e);
+				if (client_fd != -1)
+					closeClient(client_fd);
 			}
 			catch (const std::exception &e)
 			{
