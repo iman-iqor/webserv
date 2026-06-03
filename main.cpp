@@ -30,6 +30,10 @@ int main(int argc,char** argv)
     {
         configPath = argv[1];
     }
+    else if(argc == 1)
+    {
+        configPath = "config.conf";
+    }
     else
     {
         std::cerr<<"Usage: ./webserv [config file] !"<<std::endl;
