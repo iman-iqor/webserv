@@ -61,6 +61,8 @@ public:
 	const std::string& getHeader(const std::string &name) const;
 	const std::string& get_body(void) const;
 	RequestState get_state( void ) const ;
+
+	std::map<std::string, std::string> &getHeaders();
 };
 
 #endif // REQUEST_HPP

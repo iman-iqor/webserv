@@ -87,6 +87,7 @@ void Server::start()
 			try
 			{
 				handleEvent(events[i]);
+				
 			}
 			catch (const HttpException &e)
 			{

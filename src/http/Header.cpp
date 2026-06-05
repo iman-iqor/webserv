@@ -193,3 +193,8 @@ const char *Header::CookieNotFound::what( void ) const throw()
 {
     return "404 Not Found: Cookie not found";
 }
+
+std::map<std::string, std::string> &Header::getHeaders()
+{
+    return _headers;
+}

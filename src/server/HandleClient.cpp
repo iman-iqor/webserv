@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "../http/CgiHandler.hpp"
 
 void Server::handleClient(EpollData *data, uint32_t events)
 {
@@ -116,6 +117,14 @@ void Server::processRequest(int client_fd)
     }
 
     RouteInfo route = router->route(client->request, server_block);
+    std::cout<<"Route action: "<<route.action<<" for client "<<client_fd<<std::endl;
+    std::cout<<"Route file path: "<<route.file_path<<" for client "<<client_fd<<std::endl;  
+
+    if (route.action == EXECUTE_CGI) {
+        CgiHandler::start(client, route.cgi_string, route.location->root, epoll_fd, client->request.getHeaders());
+        return;
+    }
+
     Response res(*this);
     res.handleResponse(client_fd, route, server_block->error_pages, client);
     client->response = res.build();

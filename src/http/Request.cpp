@@ -223,3 +223,8 @@ const std::string& Request::get_body(void) const
 {
     return _body;
 }
+
+std::map<std::string, std::string> &Request::getHeaders()
+{
+	return _headers->getHeaders();
+}
