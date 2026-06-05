@@ -11,7 +11,6 @@ int nfds = epoll_wait(epoll_fd, events, 10, -1);
 epoll_wait(...) = waiting for activity
 
 Your program literally pauses here:
-
 😴 waiting...
 
 Until:
