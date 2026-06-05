@@ -49,7 +49,7 @@ Python (for CGI)
 PHP-CGI (for CGI testing)
 
 📦 Installation
-git clone https://github.com/yourusername/webserv.git
+git clone https://github.com/iman-iqor/webserv
 cd webserv
 make
 
