@@ -2,7 +2,8 @@
 #define PARSER_HPP
 
 #include "Config.hpp"
-
+#include <cstdlib>
+#include <sstream>
 
 class Parser
 {
@@ -16,10 +17,12 @@ class Parser
         void parseLocation(ServerBlock &server);
         void parseDirective(ServerBlock &server);
         void expectSemicolon();
+        std::string expectValue();
         void parseListenDirective(ServerBlock &server);
         long parseSize(std::string &str);
         void parseErrorPages(ServerBlock &server);
         void validMethod(std::string &str, Location &loc);
+        bool isValidIPv4(const std::string &ip);
     public:
         Parser(std::string filename);
         Config parse();

@@ -69,7 +69,7 @@ declare -a TESTS=(
     "POST with larger body (1KB)|curl -X POST -v ${SERVER}/upload -H 'Content-Length: 1024' -d \"$(head -c 1024 /dev/zero | tr '\0' 'a')\" 2>&1|201"
     
     # === DELETE REQUESTS ===
-    "DELETE to /tmp file (allowed)|bash -c 'file=/tmp/webserv_delete_test_file; printf hello > "$file"; curl -X DELETE -v ${SERVER}/tmp/webserv_delete_test_file 2>&1; test ! -e "$file"'|204"
+    "DELETE to /tmp file (allowed)|bash -c 'file=/tmp/webserv_delete_test_file; printf hello > \"\$file\"; curl -X DELETE -v \${SERVER}/tmp/webserv_delete_test_file 2>&1; test ! -e \"\$file\"'|204"
     "DELETE to / (method not allowed)|curl -X DELETE -v ${SERVER}/ 2>&1|405"
     "DELETE missing file (404)|curl -X DELETE -v ${SERVER}/tmp/does-not-exist 2>&1|404"
     

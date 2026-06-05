@@ -7,16 +7,16 @@
 #define BUFFER_SIZE 4096
 typedef struct CgiResponse_s CgiResponse_t;
 
-CgiResponse_t *parse_cgi_response(const std::string &cgi_output) {
+CgiResponse_t parse_cgi_response(const std::string &cgi_output) {
 	// parse CGI headers
-	CgiResponse_t *response = new CgiResponse_t;
+	CgiResponse_t response;
 	size_t header_end = cgi_output.find("\r\n\r\n");
 	if (header_end == std::string::npos) {
 		throw BadGatewayException("Invalid CGI response: missing header-body separator");
 	}
 
 	std::string header_str = cgi_output.substr(0, header_end);
-	response->body = cgi_output.substr(header_end + 4);
+	response.body = cgi_output.substr(header_end + 4);
 
 	size_t pos = 0;
 	while (pos < header_str.length()) {
@@ -31,7 +31,6 @@ CgiResponse_t *parse_cgi_response(const std::string &cgi_output) {
 		}
 		size_t colon_pos = line.find(':');
 		if (colon_pos == std::string::npos) {
-			delete response;
 			throw BadGatewayException("Invalid CGI response: malformed header line");
 		}
 		std::string key = line.substr(0, colon_pos);
@@ -46,18 +45,17 @@ CgiResponse_t *parse_cgi_response(const std::string &cgi_output) {
 			if (space_pos != std::string::npos) {
 				std::string code_str = value.substr(0, space_pos);
 				if (code_str.find_first_not_of("0123456789") != std::string::npos) {
-					delete response;
 					throw BadGatewayException("Invalid CGI response: non-numeric status code");
 				}
-				response->status_code = std::atoi(code_str.c_str());
-				response->status_message = value.substr(space_pos + 1);
+				response.status_code = std::atoi(code_str.c_str());
+				response.status_message = value.substr(space_pos + 1);
 			} else {
-				response->status_code = std::atoi(value.c_str());
+				response.status_code = std::atoi(value.c_str());
 				// Keep default status message
 			}
 		}
 		else if (lkey != "content-type") {
-			response->headers[key] = value;
+			response.headers[key] = value;
 		}
 	}
 	return response;
@@ -65,6 +63,7 @@ CgiResponse_t *parse_cgi_response(const std::string &cgi_output) {
 
 void  Server::handleCGI(EpollData* data, uint32_t events)
 {
+	std::cout << "handleCGI\n";
 	if (!data || !data->client)
 		return;
 	
@@ -105,8 +104,11 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 				cgi_state->res_r_fd = -1;
 			}
 			cgi_state->ready_to_send = true;
-			// CgiResponse_t *cgi_response = parse_cgi_response(cgi_state->cgi_output);
-			// TODO: handle CGI response (build HTTP response and send to client)
+			CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
+			Response res(*this);
+			res.handleCGIres(cgi_response);
+			client->response = res.build();
+			std::cout << "RES: " << client->response << std::endl;
 			client->ready_to_send = true;
 		}
 		else
@@ -162,8 +164,11 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		
 		// Build response from CGI output
 		cgi_state->ready_to_send = true;
-		// CgiResponse_t *cgi_response = parse_cgi_response(cgi_state->cgi_output);
-		// TODO: handle CGI response (build HTTP response and send to client)
+		CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
+		Response res(*this);
+		res.handleCGIres(cgi_response);
+		client->response = res.build();
+		std::cout << "RES: " << client->response << std::endl;
 		client->ready_to_send = true;
 		
 		// Clean up EpollData
@@ -171,4 +176,5 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		delete cgi_state;
 		client->cgi_state = NULL;
 	}
+
 }
