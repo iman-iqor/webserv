@@ -1,111 +1,114 @@
-.# webserv
-imane added something
-int nfds = epoll_wait(epoll_fd, events, 10, -1);
-🧠 What this line REALLY does
+🌐 Webserv
 
-👉 It means:
+A custom HTTP/1.1 web server written in C++98 as part of the 42 curriculum.
+It supports routing, static file serving, CGI execution, and multiple servers using non-blocking I/O with select()/poll()/epoll().
 
-“Stop here and wait until some socket becomes active”
+📋 Table of Contents
+About
+Features
+Prerequisites
+Installation
+Usage
+Configuration
+Supported Features
+HTTP Methods
+CGI Support
+Testing
+Project Architecture
+Authors
+📌 About
 
-🔥 Break it down simply
-epoll_wait(...) = waiting for activity
+Webserv is a lightweight HTTP server that mimics basic behavior of production servers like Nginx.
 
-Your program literally pauses here:
+It handles:
 
-😴 waiting...
+HTTP request parsing
+Routing based on configuration
+Static file serving
+Directory listing (autoindex)
+CGI execution
+Multiple clients concurrently using I/O multiplexing
+✨ Features
+HTTP/1.1 compliant request handling
+GET / POST / DELETE support
+Static file serving
+Directory listing (autoindex)
+Custom error pages
+Multiple server blocks (virtual hosts)
+Host & port-based routing
+CGI execution (Python / PHP support)
+Client body size limitation
+Non-blocking I/O with select() / poll()
+Keep-alive support (if implemented)
+🔧 Prerequisites
+OS: Linux / macOS
+Compiler: g++ or clang++ (C++98 standard)
+Make
+Optional:
+Python (for CGI)
+PHP-CGI (for CGI testing)
 
-Until:
+📦 Installation
+git clone https://github.com/iman-iqor/webserv
+cd webserv
+make
 
-a client sends data
-a new connection arrives
-📦 The parameters
-epoll_wait(epoll_fd, events, 10, -1);
-1. epoll_fd
+🚀 Usage
+./webserv config.conf
+Or use default config:
+./webserv
 
-👉 the thing watching all your sockets
+🌐 Supported Features
+📄 Static Files
+HTML, CSS, JS, images
+Proper MIME-type handling
+📁 Autoindex
 
-2. events
+If no index file exists:
 
-👉 an array where results will be stored
+Generates directory listing HTML
+🚨 Error Handling
+400 Bad Request
+403 Forbidden
+404 Not Found
+405 Method Not Allowed
+413 Payload Too Large
+500 Internal Server Error
 
-After epoll_wait, it will contain:
 
-“these sockets are ready”
+🔄 HTTP Methods GET POST DELETE
 
-3. 10
 
-👉 maximum number of events to return
+🧬 CGI Support
 
-Meaning:
+Supports execution of external scripts:
+Python (.py)
+PHP (.php)
+curl -X POST http://localhost:8080/cgi-bin/test.py
 
-“give me at most 10 ready sockets”
 
-4. -1
+🧠 Project Architecture
+File not showing in browser
+Check MIME type
+Check Content-Length
+Ensure file exists
+Autoindex not working
+Directory must exist
+No index file present
+autoindex must be ON
+CGI not working
+Script must be executable or mapped correctly
+Correct interpreter path required
+👥 Authors
 
-👉 wait forever
+Developed by:
 
-Other options:
+👨‍💻 imiqor
+👩‍💻 oumaima
+👩‍💻 radouane
 
-0 → don’t wait (instant return)
-1000 → wait 1 second
-⚡ What does it return?
-int nfds
+At 1337/42 / UM6P
 
-👉 number of sockets that are ready
+📄 License
 
-🎯 Example
-
-Let’s say you are watching 3 sockets:
-
-socket1
-socket2
-socket3
-
-Now:
-
-only socket2 has data
-
-👉 then:
-
-nfds = 1
-
-And:
-
-events[0].data.fd = socket2
-🧠 After epoll_wait
-
-You loop:
-
-for (int i = 0; i < nfds; i++) {
-
-👉 only on ready sockets
-
-🧩 Super simple analogy
-
-Imagine:
-
-you are waiting for messages 📩
-instead of checking every chat manually
-
-👉 your phone wakes you up only when:
-
-“you got a message from THIS person”
-
-That’s epoll_wait
-
-🔥 Equivalent in poll (what YOU will use)
-
-This:
-
-epoll_wait(...)
-
-is basically:
-
-poll(_pollfds.data(), _pollfds.size(), -1);
-
-Same idea:
-👉 wait until something happens
-
-🎯 One sentence to remember
-
-👉 epoll_wait = “sleep until a socket is ready, then tell me which ones”
+This project is part of the 42 School curriculum.

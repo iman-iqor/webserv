@@ -6,7 +6,6 @@ RouteInfo Router::routeDELETE(const Request &request, Location *location)
     route_info.location = location;
 
     std::string file_path = resolveFilePath(request.get_path(), location);
-
     if (!fileExists(file_path))
     {
         route_info.action = ERROR_404;
