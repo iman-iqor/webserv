@@ -82,9 +82,6 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
         case DIRECTORY_LISTING:
             handleAutoIndex(info);
             break;
-        // case EXECUTE_CGI:
-        //     handleCGI(cgi_output, error_pages);
-        //     break;
         case UPLOAD_FILE:
             server.handleFileUpload(client_fd, info,client->request);
             break;
@@ -207,7 +204,7 @@ void Response::handleRedirect(const RouteInfo &info)
 }
 
 
-void Response::handleCGI(CgiResponse_t& cgi_output)
+void Response::handleCGIres(CgiResponse_t& cgi_output)
 {
     std::map<std::string , std::string>::iterator it;
     for (it = cgi_output.headers.begin(); it != cgi_output.headers.end(); it++)
