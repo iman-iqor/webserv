@@ -36,10 +36,10 @@ void Parser::parseErrorPages(ServerBlock &server)
         codes.push_back(std::atoi(tokens[i].value.c_str()));
         i++;
     }
-    if(codes.empty() || i >= tokens.size() || tokens[i].type != WORD)
-        throw   std::runtime_error("missing path or status code for errorPages");
-    std::string path = tokens[i].value;
-    i++;
+    if(codes.empty())
+        throw   std::runtime_error("missing status code for errorPage");
+    std::string path = expectValue();
+
     for (size_t j = 0; j < codes.size(); j++)
     {
         server.error_pages[codes[j]] = path;
@@ -47,7 +47,7 @@ void Parser::parseErrorPages(ServerBlock &server)
     expectSemicolon();
 }
 
-static bool isNumber(std::string &str)
+bool Parser::isNumber(std::string &str)
 {
     for (size_t i = 0; i < str.length(); i++)
     {
@@ -99,8 +99,11 @@ void Parser::parseListenDirective(ServerBlock &server)
 }
 
 
-long Parser::parseSize(std::string &str)
+long Parser::parseSize(const std::string &val)
 {
+    std::string str = val;
+    if (str.empty())
+        throw std::runtime_error("missing value for client_max_body_size");
     char last = '\0';
     if(std::isalpha(str[str.length() - 1]))
         last = std::toupper(str[str.length() - 1]);

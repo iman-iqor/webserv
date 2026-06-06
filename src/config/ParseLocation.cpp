@@ -19,12 +19,12 @@ void Parser::parseLocation(ServerBlock &server)
         std::string key = tokens[i++].value;
         if(key == "root")
         {
-            loc.root = tokens[i++].value;
+            loc.root = expectValue();
             expectSemicolon();
         }
         else if(key == "autoindex")
         {
-            std::string value = tokens[i++].value;
+            std::string value = expectValue();
             if(value == "on")
                 loc.autoindex = true;
             else if(value == "off")
@@ -35,16 +35,18 @@ void Parser::parseLocation(ServerBlock &server)
         }
         else if(key == "methods" || key == "allowed_methods")
         {
+            if(i >= tokens.size() || tokens[i].type == SEMICOLON)
+                throw std::runtime_error("allowed methods requires at least one method");
             while(i < tokens.size() && tokens[i].type != SEMICOLON)
             {
-               validMethod(tokens[i].value, loc);
-                i++;
+                validMethod(expectValue(), loc);
             }
+
             expectSemicolon();
         }
         else if(key == "index")
         {
-            loc.index = tokens[i++].value;
+            loc.index = expectValue();
             expectSemicolon();
         }
         else if(key == "upload_path")
@@ -54,27 +56,39 @@ void Parser::parseLocation(ServerBlock &server)
         }
         else if(key == "cgi" || key == "cgi_pass")
         {
-            std::string ext = tokens[i++].value;
-            std::string path = tokens[i++].value;
+            std::string ext = expectValue();
+            std::string path = expectValue();
+            if(ext.empty() || path.empty())
+                throw std::runtime_error("invalid cgi directive");
+            if(loc.cgi.count(ext))
+                throw std::runtime_error("duplicate cgi extension");
             loc.cgi[ext] = path;
             expectSemicolon();
         }
-        else if(key == "return_url" || key == "return")
+        else if(key == "return_url")
         {
-            if(key == "return")
-            {
-                loc.return_code = std::atoi(tokens[i++].value.c_str());
-                loc.return_url = tokens[i++].value;
-            }
-            else
-            {
-                loc.return_url = tokens[i++].value;
-            }
+            loc.return_url = expectValue();
+            expectSemicolon();
+        }
+        else if(key == "return")
+        {
+            std::string codeStr = expectValue();
+            if(!isNumber(codeStr))
+                throw std::runtime_error("invalid return code");
+            loc.return_code = std::atoi(codeStr.c_str());
+            if(loc.return_code < 300 || loc.return_code > 399)
+                throw std::runtime_error("return code must be a redirect code");
+            loc.return_url = expectValue();
             expectSemicolon();
         }
         else if(key == "return_code")
         {
-            loc.return_code = std::atoi(tokens[i++].value.c_str());
+            std::string codeStr = expectValue();
+            if(!isNumber(codeStr))
+                throw std::runtime_error("invalid return code");
+            loc.return_code = std::atoi(codeStr.c_str());
+            if(loc.return_code < 300 || loc.return_code > 399)
+                throw std::runtime_error("return code must be a redirect code");
             expectSemicolon();
         }
         else
@@ -88,12 +102,17 @@ void Parser::parseLocation(ServerBlock &server)
     server.locations.push_back(loc);
 }
 
-void Parser::validMethod(std::string &str, Location &loc)
+void Parser::validMethod(const std::string &str, Location &loc)
 {
     if(str == "GET" || str == "POST" || str == "DELETE")
     {
+        for(size_t j = 0; j < loc.methods.size(); j++)
+        {
+            if(loc.methods[j] == str)
+                throw std::runtime_error("duplicate method");
+        }
         loc.methods.push_back(str);
     }
     else
-        throw std::runtime_error("Unvalid method value" + str);
+        throw std::runtime_error("Unvalid method value " + str);
 }

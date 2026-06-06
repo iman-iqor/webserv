@@ -19,10 +19,11 @@ class Parser
         void expectSemicolon();
         std::string expectValue();
         void parseListenDirective(ServerBlock &server);
-        long parseSize(std::string &str);
+        long parseSize(const std::string &str);
         void parseErrorPages(ServerBlock &server);
-        void validMethod(std::string &str, Location &loc);
+        void validMethod(const std::string &str, Location &loc);
         bool isValidIPv4(const std::string &ip);
+        bool isNumber(std::string &str);
     public:
         Parser(std::string filename);
         Config parse();

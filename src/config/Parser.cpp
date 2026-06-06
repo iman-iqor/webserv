@@ -46,8 +46,7 @@ void Parser::parseServer()
         else if(token.value == "client_max_body_size")
         {
             i++;
-            server.client_max_body_size = parseSize(tokens[i].value);
-            i++;
+            server.client_max_body_size = parseSize(expectValue());
             expectSemicolon();
         }
         else if(token.value == "error_pages" || token.value == "error_page")
@@ -63,8 +62,7 @@ void Parser::parseServer()
         else if(token.value == "root")
         {
             i++;
-            server.root = tokens[i].value;
-            i++;
+            server.root = expectValue();
             expectSemicolon();
         }  
         else
