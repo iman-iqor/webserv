@@ -10,7 +10,7 @@ RouteInfo Router::routeDELETE(const Request &request, Location *location)
     {
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
-        std::string error_page=resolveErrorPage(404);
+        std::string error_page=resolveErrorPage(404,server_block);
         if (!error_page.empty())        {
             route_info.action = SERVE_FILE;
             route_info.file_path = error_page;
@@ -24,7 +24,7 @@ RouteInfo Router::routeDELETE(const Request &request, Location *location)
     {
         route_info.http_status = 403;
         route_info.status_message = "Forbidden";
-        std::string error_page=resolveErrorPage(403);
+        std::string error_page=resolveErrorPage(403,server_block);
         if (!error_page.empty())
         {
             route_info.action = SERVE_FILE;
