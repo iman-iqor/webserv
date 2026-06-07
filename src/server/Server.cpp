@@ -1,4 +1,6 @@
 #include "Server.hpp"
+volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit 
+
 
 Server::Server(Config &config)
 {
