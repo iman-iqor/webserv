@@ -34,11 +34,18 @@ enum FDType
     CGI_PIPE
 };
 
+struct CgiContext {
+    int     client_fd;   // which client is waiting
+    int     pipe_fd;     // read-end of stdout pipe
+    pid_t   child_pid;   // for waitpid / timeout
+    std::string output;  // accumulates CGI stdout
+};
 struct EpollData
 {
     int fd;
     FDType type;
     Client *client;
+    CgiContext *cgi;    // non-null when type == CGI_PIPE
 };
 
 class Server
@@ -64,13 +71,17 @@ public:
 
     void acceptClient(int listen_fd);
     void handleClient(EpollData *data, uint32_t events);
-    void handleCGI(EpollData *data, uint32_t events);
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
     void handleFileUpload(int client_fd, const RouteInfo &route, const Request &request);
     void handleDeleteFile(int client_fd, const RouteInfo &route);
     std::string buildErrorResponse(int code, const std::string &message);
+    
+    //CGI
+    void handleCGI(EpollData *data, uint32_t events);
+    void launchCGI(Client *client,const RouteInfo);
+    void setupCGIEnv(Request &req,RouteInfo &route);
 
     void closeClient(int fd);
     void switchToWrite(int client_fd);

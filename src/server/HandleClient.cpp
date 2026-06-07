@@ -116,6 +116,11 @@ void Server::processRequest(int client_fd)
     }
 
     RouteInfo route = router->route(client->request, server_block);
+    if(route.action == EXECUTE_CGI)
+    {
+        launchCGI(client, route);
+        return;
+    }
     Response res(*this);
     res.handleResponse(client_fd, route, server_block->error_pages, client);
     client->response = res.build();

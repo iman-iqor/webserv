@@ -1,180 +1,103 @@
-#include"Server.hpp"
+#include "Server.hpp"
 #include <signal.h>
 #include <sys/wait.h>
 #include "../http/Exceptions.hpp"
-#include "../http/CgiHandler.hpp"
 
-#define BUFFER_SIZE 4096
-typedef struct CgiResponse_s CgiResponse_t;
+void Server::setupCGIEnv(Request &req,RouteInfo &route)
+{
+    setenv("REQUEST_METHOD", req.get_method().c_str(), 1);
+    setenv("SCRIPT_FILENAME", route.cgi_string.c_str(), 1);
+    setenv("PATH_INFO", req.get_path().c_str(), 1);
+    setenv("QUERY_STRING",req.get_query_string().c_str(),1);
+    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
+    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
+    setenv("SERVER_SOFTWARE", "Webserv/1.0", 1);
+    setenv("REDIRECT_STATUS", "200", 1); // for PHP CGI
 
-CgiResponse_t parse_cgi_response(const std::string &cgi_output) {
-	// parse CGI headers
-	CgiResponse_t response;
-	size_t header_end = cgi_output.find("\r\n\r\n");
-	if (header_end == std::string::npos) {
-		throw BadGatewayException("Invalid CGI response: missing header-body separator");
-	}
+    const std::string &ct = req.getHeader("Content-Type");
+    if (!ct.empty())
+        setenv("CONTENT_TYPE", ct.c_str(), 1);
+    
+    //content lenght must always be set for post even if 0
+    const std::string &body = req.get_body();
+    if(req.get_method() == "POST")
+    {
+        std::ostringstream ss;
+        ss << body.size();
+        setenv("CONTENT_LENGTH", ss.str().c_str(), 1);
+    }
 
-	std::string header_str = cgi_output.substr(0, header_end);
-	response.body = cgi_output.substr(header_end + 4);
+    const std::string &cookies = req.getHeader("Cookie");
+    if(!cookies.empty())
+        setenv("HTTP_COOKIE", cookies.c_str(), 1);
 
-	size_t pos = 0;
-	while (pos < header_str.length()) {
-		size_t line_end = header_str.find("\r\n", pos);
-		if (line_end == std::string::npos)
-			break;
-		
-		std::string line = header_str.substr(pos, line_end - pos);
-		pos = line_end + 2; // Move past the \r\n
-		if (line.empty()) {
-			continue; // Skip empty lines
-		}
-		size_t colon_pos = line.find(':');
-		if (colon_pos == std::string::npos) {
-			throw BadGatewayException("Invalid CGI response: malformed header line");
-		}
-		std::string key = line.substr(0, colon_pos);
-		std::string value = line.substr(colon_pos + 1);
-		key.erase(key.find_last_not_of(" \t\r\n") + 1);
-		value.erase(0, value.find_first_not_of(" \t\r\n"));
-		std::string lkey = key;
-		to_lower(lkey);
-		if (lkey == "status") {
-			// Parse status line: e.g., "200 OK" or just "200"
-			size_t space_pos = value.find(' ');
-			if (space_pos != std::string::npos) {
-				std::string code_str = value.substr(0, space_pos);
-				if (code_str.find_first_not_of("0123456789") != std::string::npos) {
-					throw BadGatewayException("Invalid CGI response: non-numeric status code");
-				}
-				response.status_code = std::atoi(code_str.c_str());
-				response.status_message = value.substr(space_pos + 1);
-			} else {
-				response.status_code = std::atoi(value.c_str());
-				// Keep default status message
-			}
-		}
-		else if (lkey != "content-type") {
-			response.headers[key] = value;
-		}
-	}
-	return response;
+    const std::string &host = req.getHeader("Host");
+
+    if(!host.empty())
+        setenv("HTTP_HOST", host.c_str(), 1);
 }
 
-void  Server::handleCGI(EpollData* data, uint32_t events)
-{
-	std::cout << "handleCGI\n";
-	if (!data || !data->client)
-		return;
-	
-	Client* client = data->client;
-	CgiState_t *cgi_state = client->cgi_state;
-	
-	if (events & EPOLLERR)
-	{
-		// Handle error
-		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, data->fd, NULL);
-		close(data->fd);
-		close_pipes(cgi_state);
-		kill(cgi_state->pid, SIGKILL);
-		waitpid(cgi_state->pid, NULL, WNOHANG);
-		delete data;
-		delete cgi_state;
-		client->cgi_state = NULL;
-		return;
-	}
-	
-	if (events & EPOLLIN)
-	{
-		// Read CGI output
-		char buffer[BUFFER_SIZE];
-		ssize_t bytes_read = read(cgi_state->res_r_fd, buffer, BUFFER_SIZE - 1);
-		
-		if (bytes_read < 0)
-		{
-			throw InternalServerErrorException("Failed to read from CGI output pipe");
-		}
-		if (bytes_read == 0)
-		{
-			// EOF, CGI finished writing
-			if (cgi_state->res_r_fd != -1)
-			{
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->res_r_fd, NULL);
-				close(cgi_state->res_r_fd);
-				cgi_state->res_r_fd = -1;
-			}
-			cgi_state->ready_to_send = true;
-			CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
-			Response res(*this);
-			res.handleCGIres(cgi_response);
-			client->response = res.build();
-			std::cout << "RES: " << client->response << std::endl;
-			client->ready_to_send = true;
-		}
-		else
-		{
-			buffer[bytes_read] = '\0';
-			cgi_state->cgi_output.append(buffer);
-		}
-	}
-	
-	if (events & EPOLLOUT)
-	{
-		// Write request body to CGI input
-		if (cgi_state->req_w_fd != -1 && cgi_state->body_sent < client->request.get_content_length())
-		{
-			const std::string& body = client->request.get_body();
-			ssize_t bytes_to_send = client->request.get_content_length() - cgi_state->body_sent;
-			ssize_t bytes_written = write(cgi_state->req_w_fd, body.c_str() + cgi_state->body_sent, bytes_to_send);
-			
-			if (bytes_written > 0)
-			{
-				cgi_state->body_sent += bytes_written;
-			}
-			
-			// Check if all body has been sent
-			if (cgi_state->body_sent >= client->request.get_content_length())
-			{
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->req_w_fd, NULL);
-				close(cgi_state->req_w_fd);
-				cgi_state->req_w_fd = -1;
-			}
-		}
-	}
-	
-	if (events & EPOLLHUP)
-	{
-		// CGI process closed the pipe, finalize response
-		if (cgi_state->res_r_fd != -1)
-		{
-			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->res_r_fd, NULL);
-			close(cgi_state->res_r_fd);
-			cgi_state->res_r_fd = -1;
-		}
-		if (cgi_state->req_w_fd != -1)
-		{
-			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->req_w_fd, NULL);
-			close(cgi_state->req_w_fd);
-			cgi_state->req_w_fd = -1;
-		}
-		
-		// Wait for CGI child process to finish (non-blocking)
-		int status;
-		waitpid(cgi_state->pid, &status, WNOHANG);
-		
-		// Build response from CGI output
-		cgi_state->ready_to_send = true;
-		CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
-		Response res(*this);
-		res.handleCGIres(cgi_response);
-		client->response = res.build();
-		std::cout << "RES: " << client->response << std::endl;
-		client->ready_to_send = true;
-		
-		// Clean up EpollData
-		delete data;
-		delete cgi_state;
-		client->cgi_state = NULL;
-	}
 
+
+
+// This function will fork a child process to execute the CGI script
+// and set up pipes for communication between the server and the CGI process.
+// The implementation details are complex and involve setting up environment variables,
+// handling input/output redirection, and managing the CGI process lifecycle.
+void Server::launchCGI(Client *client, const RouteInfo route)
+{
+	const std::string &body = client->request.get_body();
+    bool has_body = 0;
+    if(client->request.get_method() == "POST" && !body.empty())
+        has_body = 1;       
+
+    int stdout_pipe[2];
+    int stdin_pipe[2]={-1,-1};
+
+    if(pipe(stdout_pipe) == -1)
+    {
+        throw InternalServerErrorException("Failed to create stdout pipe");
+    }
+
+    if(has_body && pipe(stdin_pipe) == -1)
+    {
+        close(stdout_pipe[0]);
+        close(stdout_pipe[1]);
+        throw InternalServerErrorException("Failed to create stdin pipe");
+    }
+
+    pid_t pid = fork();
+    if(pid == -1)
+    {
+        close(stdout_pipe[0]);
+        close(stdout_pipe[1]);
+        if(has_body)
+        {
+            close(stdin_pipe[0]);
+            close(stdin_pipe[1]);
+        }
+        throw InternalServerErrorException("Fork failed");
+    }
+
+    if(pid == 0)
+    {
+        close(stdout_pipe[0]);
+        if(dup2(stdout_pipe[1],STDOUT_FILENO == -1))
+            _exit(1);
+        close(stdout_pipe[1]);
+
+        if(has_body)
+        {
+            close(stdin_pipe[1]);
+            if(dup2(stdin_pipe[0],STDIN_FILENO) == -1)
+                _exit(1);
+            close(stdin_pipe[0]);
+        }
+        //close all other open fds  the child inherited(epoll_fd,client_fds...)
+        //simple approach :clos all fds above stderr
+        for(int fd = 3; fd < 1024; ++fd)
+            close(fd);
+        
+        setupCGIEnv(client->request,route);
+    }
 }

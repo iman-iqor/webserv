@@ -1,5 +1,4 @@
 #include "Client.hpp"
-#include "../http/CgiHandler.hpp"
 
 Client::Client(int listen_fd, int client_fd)
 {
@@ -14,16 +13,7 @@ Client::Client(int listen_fd, int client_fd)
 }
 
 Client::~Client() {
-    // Clean up CGI resources
-    if (cgi_state && cgi_state->pid != -1)
-    {
-        kill(cgi_state->pid, SIGKILL);
-        waitpid(cgi_state->pid, NULL, 0);
-        if (cgi_state->fdi[0] != -1) close(cgi_state->fdi[0]);
-        if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
-        if (cgi_state->fdo[0] != -1) close(cgi_state->fdo[0]);
-        if (cgi_state->fdo[1] != -1) close(cgi_state->fdo[1]);
-    }
+    
     
     //Clean up buffer and response
     buffer.clear();

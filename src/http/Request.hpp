@@ -33,6 +33,8 @@ class Request {
     std::string _buffer;
 	Header *_headers;
 	std::string _raw_bytes;
+	//imane added this for cgi 06/06/2024
+	std::string _query_string;
 
 	
     bool (Request::*_parse[4])(void);
@@ -60,6 +62,8 @@ public:
 	//imane added this
 	const std::string& getHeader(const std::string &name) const;
 	const std::string& get_body(void) const;
+	//imane added this for cgi 06/06/2024
+	const std::string& get_query_string( void ) const;
 	RequestState get_state( void ) const ;
 };
 

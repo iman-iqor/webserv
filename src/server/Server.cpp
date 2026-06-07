@@ -120,8 +120,8 @@ void Server::handleEvent(struct epoll_event &event)
 		acceptClient(fd);
 	else if (data->type == CLIENT)
 		handleClient(data, event.events);
-	else if (data->type == CGI_PIPE)
-		handleCGI(data, event.events);
+	// else if (data->type == CGI_PIPE)
+	// 	handleCGI(data, event.events);
 }
 
 void Server::closeClient(int fd)

@@ -12,7 +12,6 @@ SRC = \
 	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
-	src/http/CgiHandler.cpp \
 	src/Router/Router.cpp \
 	src/Router/RouterHelper.cpp \
 	src/Router/RouterGet.cpp \
