@@ -44,7 +44,7 @@ class Response
         void ErrorResponse(int code, const std::string &msg, const std::map<int, std::string > error_pages);
         std::string MimeType(const std::string &path);
         void handleRedirect(const RouteInfo &info);
-        void handleCGI(CgiResponse_t& cgi_output);
+        void handleCGIres(CgiResponse_t& cgi_output);
 
         
 };

@@ -7,6 +7,8 @@ MAIN = main.cpp
 
 SRC = src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
+	src/config/ParseLocation.cpp\
+	src/config/ParseHelpers.cpp\
 	src/http/Header.cpp \
 	src/http/Request.cpp \
 	src/http/Response.cpp \
