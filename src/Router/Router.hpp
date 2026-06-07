@@ -57,6 +57,7 @@ class Router
         bool isDirectory(const std::string &path);
         bool isExecutable(const std::string &path);
         std::string getFileExtension(const std::string &path);
+        std::string resolveErrorPage(int error_code);
 
         bool isUploadAllowed(Location* location);
         std::string sizeToString(size_t value);
