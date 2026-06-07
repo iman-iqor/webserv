@@ -47,12 +47,13 @@ public:
 	static CgiState_t *start(
 		Client *client,
 		const std::string &cgi_path,
-		std::string &bin_path,
+		const std::string &bin_path,
 		int epoll_fd,
 		const std::map< std::string, std::string > &env_map
 	);
 };
 
 void close_pipes(CgiState_t *cgi_state);
+void open_pipe(CgiState_t *cgi_state, int fds[2]);
 
 #endif // CGIHANDLER_HPP
