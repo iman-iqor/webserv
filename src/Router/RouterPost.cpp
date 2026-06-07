@@ -16,7 +16,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
         {
             route_info.http_status = 413;
             route_info.status_message = "Payload Too Large";
-            std::string error_page=resolveErrorPage(413);
+            std::string error_page=resolveErrorPage(413,server_block);
             if (!error_page.empty())            {
                 route_info.action = SERVE_FILE;
                 route_info.file_path = error_page;
@@ -60,7 +60,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     // post ot alloed
     route_info.http_status = 405;
     route_info.status_message = "Method Not Allowed";
-    std::string error_page=resolveErrorPage(405);
+    std::string error_page=resolveErrorPage(405,server_block);
     if (!error_page.empty())
     {
         route_info.action = SERVE_FILE;

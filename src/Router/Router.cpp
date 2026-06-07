@@ -10,14 +10,14 @@ Router::Router(Config *config)
     this->server_block = NULL;
 }
 
-std::string Router::resolveErrorPage(int error_code)
+std::string Router::resolveErrorPage(int error_code, ServerBlock *server_block)
 {
-    if(!this->server_block)
+    if(!server_block)
         return "";
     
-    std::map<int,std::string>:: iterator it = this->server_block->error_pages.find(error_code);
+    std::map<int,std::string>:: iterator it = server_block->error_pages.find(error_code);
 
-    if(it == this->server_block->error_pages.end())
+    if(it == server_block->error_pages.end())
         return "";
 
     std::string page_path = it->second;
@@ -29,7 +29,7 @@ std::string Router::resolveErrorPage(int error_code)
         page_path[x_pos]='0' + (error_code % 10);
     }
 
-    std::string full_path = this->server_block->root + page_path;
+    std::string full_path = server_block->root + page_path;
     if (fileExists(full_path))
         return full_path;
     return "";
@@ -48,7 +48,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
         
-        std::string error_page=resolveErrorPage(404);
+        std::string error_page=resolveErrorPage(404, server_block);
         if (!error_page.empty())
         {
             route_info.action = SERVE_FILE;
@@ -65,7 +65,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
     {
         route_info.http_status = 405;
         route_info.status_message = "Method Not Allowed";
-        std::string error_page=resolveErrorPage(405);
+        std::string error_page=resolveErrorPage(405, server_block);
 
         if (!error_page.empty())
         {
@@ -97,7 +97,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
 
     route_info.http_status = 405;
     route_info.status_message = "Method Not Allowed";
-     std::string error_page=resolveErrorPage(405);
+     std::string error_page=resolveErrorPage(405, server_block);
     if (!error_page.empty())    {
         route_info.action = SERVE_FILE;
         route_info.file_path = error_page;
