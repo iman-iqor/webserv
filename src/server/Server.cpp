@@ -95,6 +95,7 @@ void Server::start()
 			{
 				// events[i].data.fd is not valid when we stored a pointer in data.ptr.
 				// Retrieve the EpollData pointer and use its fd to find the client.
+				std::cerr << RED << "HTTP error: " << e.statusCode << " " << e.statusMessage << ": " << e.what() << RESET << std::endl;
 				EpollData *ed = NULL;
 				if (events[i].data.ptr)
 					ed = static_cast<EpollData *>(events[i].data.ptr);
