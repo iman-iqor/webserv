@@ -121,7 +121,14 @@ void Server::processRequest(int client_fd)
     std::cout<<"Route file path: "<<route.file_path<<" for client "<<client_fd<<std::endl;  
 
     if (route.action == EXECUTE_CGI) {
-        CgiHandler::start(client, route.cgi_string, route.location->root, epoll_fd, client->request.getHeaders());
+        std::string bin_path;
+        if (route.file_extension == ".py") {
+            bin_path = "/usr/bin/python3";
+        } else if (route.file_extension == ".php") {
+            bin_path = "/usr/bin/php";
+        }
+        // TODO: Add handle if the file extension is not supported for CGI execution
+        CgiHandler::start(client, route.cgi_string, bin_path, epoll_fd, client->request.getHeaders());
         return;
     }
 
