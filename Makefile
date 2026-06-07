@@ -46,11 +46,13 @@ $(OBJ_DIR)/%.o: %.cpp
 ###########################################
 ###########################################
 
+TEST_CGI = test_cgi
+
 CGI_MAIN = src/http/tests/cgi_tests.cpp
 CGI_OBJ = $(addprefix $(OBJ_DIR)/,$(CGI_MAIN:.cpp=.o))
 
-test_cgi: $(CGI_OBJ) $(OBJ)
-	$(CXX) $(CXXFLAGS) $(CGI_OBJ) $(OBJ) -o test_cgi
+$(TEST_CGI): $(CGI_OBJ) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(CGI_OBJ) $(OBJ) -o $(TEST_CGI)
 
 ###########################################
 ###########################################
@@ -63,7 +65,7 @@ clean:
 	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(TEST_CGI)
 
 re: fclean all
 
