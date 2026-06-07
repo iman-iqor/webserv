@@ -44,10 +44,10 @@ int main(int argc,char** argv)
         Parser parser(configPath);
         Config config = parser.parse();
 
-        // Server server(config);
-        // server.setupSockets();
-        // server.initEpoll();
-        // server.start();
+        Server server(config);
+        server.setupSockets();
+        server.initEpoll();
+        server.start();
 
     }
     catch(const std::exception &e)
