@@ -130,6 +130,15 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 			std::cout << "RES: " << client->response << std::endl;
 			client->ready_to_send = true;
 			// Clean up EpollData
+			 struct epoll_event event;
+    EpollData *data = new EpollData;
+    data->fd = client->fd;
+    data->type = CLIENT;
+    data->client = client;
+    event.data.ptr = data;
+    event.events = EPOLLOUT;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
+    std::cout << "\033[32mClient " << client->fd << " is now ready to send response\033[0m" << std::endl;
 			delete data;
 			delete client->cgi_state;
 			client->cgi_state = NULL;
@@ -206,10 +215,20 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		client->response = res.build();
 		std::cout << "RES: " << client->response << std::endl;
 		client->ready_to_send = true;
-		
+					 struct epoll_event event;
+    EpollData *data = new EpollData;
+    data->fd = client->fd;
+    data->type = CLIENT;
+    data->client = client;
+    event.data.ptr = data;
+    event.events = EPOLLOUT;
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client->fd, &event);
+    std::cout << "\033[32mClient " << client->fd << " is now ready to send response\033[0m" << std::endl;
 		// Clean up EpollData
-		delete data;
-		delete cgi_state;
+        handleWrite(data->client);
+
+		// delete data;
+		// delete cgi_state;
 		client->cgi_state = NULL;
 	}
 
