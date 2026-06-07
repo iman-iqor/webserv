@@ -3,9 +3,9 @@ NAME = webserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC = \
-	main.cpp \
-	src/config/Parser.cpp \
+MAIN = main.cpp
+
+SRC = src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
 	src/http/Header.cpp \
 	src/http/Request.cpp \
@@ -31,16 +31,29 @@ SRC = \
 
 OBJ_DIR = obj_file
 OBJ = $(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
+MAIN_OBJ = $(addprefix $(OBJ_DIR)/,$(MAIN:.cpp=.o))
 
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+$(NAME): $(MAIN_OBJ) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(MAIN_OBJ) $(OBJ) -o $(NAME)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+###########################################
+###########################################
+
+CGI_MAIN = src/http/tests/cgi_tests.cpp
+CGI_OBJ = $(addprefix $(OBJ_DIR)/,$(CGI_MAIN:.cpp=.o))
+
+test_cgi: $(CGI_OBJ) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(CGI_OBJ) $(OBJ) -o test_cgi
+
+###########################################
+###########################################
 
 run: all
 	clear
