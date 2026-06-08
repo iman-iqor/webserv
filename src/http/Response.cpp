@@ -56,7 +56,7 @@ std::string Response::build()
 
 // void Response::handleResponse(int client_fd, const RouteInfo& info, CgiResponse_t& cgi_output, const std::map<int, std::string> error_pages, Client &client)
 
-void Response::handleResponse(int client_fd, const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client)
+void Response::handleResponse(const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client)
 {
     this->setStatus(info.http_status,info.status_message);
 
@@ -83,10 +83,10 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
             handleAutoIndex(info);
             break;
         case UPLOAD_FILE:
-            server.handleFileUpload(client_fd, info,client->request);
+            handleFileUpload(info, client->request, error_pages);
             break;
         case DELETE_FILE:
-            server.handleDeleteFile(client_fd, info);
+            handleFileDelete( info, error_pages);
             break;
         default:
             break;
@@ -221,4 +221,36 @@ void Response::handleCGIres(CgiResponse_t& cgi_output)
 
 }
 
+void Response::handleFileUpload(const RouteInfo &info, Request &req, const std::map<int, std::string > error_pages)
+{
+    RouteInfo upload_info = server.FileUploadRoute(info, req);
 
+    this->setStatus(upload_info.http_status,upload_info.status_message);
+
+    if (upload_info.http_status >= 400)
+    {
+        ErrorResponse(upload_info.http_status, upload_info.status_message, error_pages);
+    }
+    else
+    {
+        setHeader("Content-Type", "text/plain");
+        setBody("File uploaded successfully");
+    }
+}
+
+void Response::handleFileDelete(const RouteInfo &info, const std::map<int, std::string > error_pages)
+{
+    RouteInfo upload_info = server.DeleteFile(info);
+
+    this->setStatus(upload_info.http_status,upload_info.status_message);
+
+    if (upload_info.http_status >= 400)
+    {
+        ErrorResponse(upload_info.http_status, upload_info.status_message, error_pages);
+    }
+    else
+    {
+        setStatus(204, "No Content");
+        setBody("");
+    }
+}

@@ -38,14 +38,15 @@ class Response
         void setBody(const std::string &body);
         void setContentLength();
         std::string build();
-        void handleResponse(int client_fd, const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client);
+        void handleResponse(const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client);
         void handleAutoIndex(const RouteInfo &info);
         void serveFile(const std::string &file_path, const std::map<int, std::string > error_pages);
         void ErrorResponse(int code, const std::string &msg, const std::map<int, std::string > error_pages);
         std::string MimeType(const std::string &path);
         void handleRedirect(const RouteInfo &info);
         void handleCGIres(CgiResponse_t& cgi_output);
-
+        void handleFileUpload(const RouteInfo &info, Request &req, const std::map<int, std::string > error_pages);
+        void handleFileDelete(const RouteInfo &info, const std::map<int, std::string > error_pages);
         
 };
 
