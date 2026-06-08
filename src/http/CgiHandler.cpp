@@ -146,7 +146,6 @@ CgiState_t *CgiHandler::start(
 		if (DEBUG) std::cout << GREEN << "In CGI parent process. Closing unused pipe ends and setting up epoll..." << RESET << std::endl; // Debug print in parent process
 		close(cgi_state->fdi[0]); // close read end of request pipe in parent
 		set_non_blocking(cgi_state->fdi[1]);
-	} else {
 	}
 	close(cgi_state->fdo[1]); // close write end of response pipe in parent
 
@@ -155,10 +154,10 @@ CgiState_t *CgiHandler::start(
 	// Add fdo[0] to epoll for monitoring CGI output
 	struct epoll_event event;
 	event.events = EPOLLIN;
-	EpollData* data = new EpollData;
-	data->fd = cgi_state->fdo[0];
-	data->type = CGI_PIPE;
-	data->client = client;
+	EpollData* data = new EpollData(cgi_state->fdo[0], CGI_PIPE, client);
+	// data->client = client;
+	// data->fd = cgi_state->fdo[0];
+	// data->type = CGI_PIPE;
 	event.data.ptr = data;
 	data->client->cgi_state = cgi_state; // Store CGI state in EpollData for access in event handler
 
@@ -177,11 +176,11 @@ CgiState_t *CgiHandler::start(
 		set_non_blocking(cgi_state->fdi[1]);
 		struct epoll_event req_event;
 		req_event.events = EPOLLOUT;
-		EpollData* req_data = new EpollData;
+		EpollData* req_data = new EpollData(client->cgi_state->fdi[1], CGI_PIPE, client);
+		// req_data->client = client;
+		// req_data->fd = cgi_state->fdi[1];
+		// req_data->type = CGI_PIPE;
 		req_data->client->cgi_state = cgi_state;
-		req_data->fd = cgi_state->fdi[1];
-		req_data->type = CGI_PIPE;
-		req_data->client = client;
 		req_event.data.ptr = req_data;
 
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {

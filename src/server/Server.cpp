@@ -49,10 +49,7 @@ void Server::initEpoll()
 
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		EpollData *data = new EpollData;
-		data->fd = listen_fds[i];
-		data->type = SERVER;
-		data->client = NULL;
+		EpollData *data = new EpollData(listen_fds[i], SERVER, NULL);
 		event.data.ptr = data;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1)
 			throw std::runtime_error("epoll_ctl ADD failed");

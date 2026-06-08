@@ -123,16 +123,19 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 				cgi_state->res_r_fd = -1;
 			}
 			cgi_state->ready_to_send = true;
-			CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
-			Response res(*this);
-			res.handleCGIres(cgi_response);
-			client->response = res.build();
-			std::cout << "RES: " << client->response << std::endl;
-			client->ready_to_send = true;
-			// Clean up EpollData
-			delete data;
-			delete client->cgi_state;
-			client->cgi_state = NULL;
+			// CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
+			// Response res(*this);
+			// res.handleCGIres(cgi_response);
+			// client->response = res.build();
+			// client->ready_to_send = true;
+
+			// struct epoll_event event;
+			// EpollData *data = new EpollData(client->fd, CLIENT, client);
+			// event.data.ptr = data;
+			// event.events = EPOLLOUT;
+			// epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
+			// delete cgi_state;
+			// client->cgi_state = NULL;
 		}
 		else
 		{
@@ -186,9 +189,20 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		
 		// Wait for CGI child process to finish (non-blocking)
 		int status;
-		waitpid(cgi_state->pid, &status, WNOHANG);
+		pid_t result = waitpid(cgi_state->pid, &status, WNOHANG);
+
+		if (result == 0) {
+			kill(cgi_state->pid, SIGKILL);
+			waitpid(cgi_state->pid, &status, 0);
+			std::cerr << RED << "Warning: CGI child process was still running and has been killed." << RESET << std::endl; // Debug print of CGI child still running warning
+		} else if (result == -1) {
+			// Error (e.g. child already reaped, or invalid pid)
+			perror("waitpid");
+			throw InternalServerErrorException("Failed to wait for CGI child process");
+		}
 
 		if (DEBUG) {
+			// TODO: verify if the behavior of the cgi response is the same when the child process is killed vs when it exits normally. If the child is killed, we might not get a complete response, so we should handle that case appropriately in the response handling code.
 			if (WIFEXITED(status)) {
 				std::cout << GREEN << "CGI child process exited with status " << WEXITSTATUS(status) << "." << RESET << std::endl; // Debug print of CGI child exit status
 			} else if (WIFSIGNALED(status)) {
@@ -204,13 +218,14 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		Response res(*this);
 		res.handleCGIres(cgi_response);
 		client->response = res.build();
-		std::cout << "RES: " << client->response << std::endl;
 		client->ready_to_send = true;
-		
-		// Clean up EpollData
-		delete data;
+
+		struct epoll_event event;
+		EpollData *data = new EpollData(client->fd, CLIENT, client);
+		event.data.ptr = data;
+		event.events = EPOLLOUT;
+		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
 		delete cgi_state;
 		client->cgi_state = NULL;
 	}
-
 }

@@ -36,6 +36,7 @@ enum FDType
 
 struct EpollData
 {
+    EpollData(int fd, FDType type, Client *client) : fd(fd), type(type), client(client) {}
     int fd;
     FDType type;
     Client *client;
