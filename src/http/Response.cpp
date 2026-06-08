@@ -66,7 +66,7 @@ void Response::handleResponse(const RouteInfo& info, const std::map<int, std::st
         this->setHeader(it->first, it->second);
     }
 
-    if(info.http_status >= 400)
+    if(info.http_status >= 400 and info.action != SERVE_FILE)
     {
         this->ErrorResponse(info.http_status, info.status_message, error_pages);
         return;

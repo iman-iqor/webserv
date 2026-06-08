@@ -8,10 +8,16 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     std::cout << "resolved file path: " << file_path << std::endl;
     if (!fileExists(file_path))
     {
-
-        route_info.action = ERROR_404;
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
+        std::string error_page=resolveErrorPage(404,server_block);
+        if (!error_page.empty())
+        {
+            route_info.action = SERVE_FILE;
+            route_info.file_path = error_page;
+        }
+        else
+            route_info.action = ERROR_404;
         return route_info;
     }
 
@@ -23,7 +29,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
         index_path += location->index;
         if (fileExists(index_path) && !isDirectory(index_path))
         {
-            std::cout << "\033[31mindex file found\033[31m" << std::endl;
             route_info.action = SERVE_FILE;
             route_info.file_path = index_path;
             route_info.http_status = 200;
@@ -33,7 +38,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
 
         if (location->autoindex == true)
         {
-            std::cout << "\033[31mautoindex enabled\033[31m" << std::endl;
             route_info.action = DIRECTORY_LISTING;
             route_info.file_path = file_path;
             route_info.http_status = 200;
@@ -41,9 +45,16 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
             return route_info;
         }
 
-        route_info.action = ERROR_403;
         route_info.http_status = 403;
         route_info.status_message = "Forbidden";
+        std::string error_page=resolveErrorPage(403,server_block);
+        if (!error_page.empty())
+        {
+            route_info.action = SERVE_FILE;
+            route_info.file_path = error_page;
+        }
+        else
+            route_info.action = ERROR_403;
         return route_info;
     }
 
