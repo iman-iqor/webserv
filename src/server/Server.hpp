@@ -68,7 +68,7 @@ public:
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
-    void handleFileUpload(int client_fd, const RouteInfo &route, const Request &request);
+    RouteInfo handleFileUpload(const RouteInfo &route, const Request &request);
     void handleDeleteFile(int client_fd, const RouteInfo &route);
     std::string buildErrorResponse(int code, const std::string &message);
 
