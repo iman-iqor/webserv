@@ -54,6 +54,7 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
         {
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
+            route_info.cgi_path = location->cgi[extension];
             route_info.http_status = 200;
             route_info.status_message = "OK";
             return route_info;

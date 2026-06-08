@@ -80,7 +80,7 @@ public:
     
     //CGI
     void handleCGI(EpollData *data, uint32_t events);
-    void launchCGI(Client *client,const RouteInfo);
+    void launchCGI(Client *client, RouteInfo);
     void setupCGIEnv(Request &req,RouteInfo &route);
 
     void closeClient(int fd);

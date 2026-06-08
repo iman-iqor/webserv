@@ -44,7 +44,7 @@ void Server::setupCGIEnv(Request &req,RouteInfo &route)
 // and set up pipes for communication between the server and the CGI process.
 // The implementation details are complex and involve setting up environment variables,
 // handling input/output redirection, and managing the CGI process lifecycle.
-void Server::launchCGI(Client *client, const RouteInfo route)
+void Server::launchCGI(Client *client, RouteInfo route)
 {
 	const std::string &body = client->request.get_body();
     bool has_body = 0;
@@ -99,5 +99,21 @@ void Server::launchCGI(Client *client, const RouteInfo route)
             close(fd);
         
         setupCGIEnv(client->request,route);
+
+        char* argv[] =
+        {
+            const_cast<char *>(route.cgi_path.c_str()),
+            const_cast<char *>(route.cgi_string.c_str()),
+            NULL
+        };
+        execve(route.cgi_path.c_str(),argv,environ);
+        // If execve returns, it means it failed
+        _exit(1);
+    }
+    close(stdout_pipe[1]);
+
+    if(has_body)
+    {
+        
     }
 }

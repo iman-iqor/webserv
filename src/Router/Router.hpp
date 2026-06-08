@@ -34,7 +34,8 @@ struct RouteInfo
     std::string file_path;//path of the file to server file actio
     std::string redirect_url;
     std::string cgi_string;//script path for execute cgi;
-     std::string upload_dir;   //for upload file action
+    std::string cgi_path;        //path to interpreter e.g. /usr/bin/python3
+    std::string upload_dir;   //for upload file action
     Location *location;//the location block that matched the request
     int http_status;
     std::string status_message;//ok or not found li  7bit
