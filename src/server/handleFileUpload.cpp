@@ -2,7 +2,7 @@
 #include <ctime>
 #include "../http/Response.hpp"
 
-RouteInfo Server::handleFileUpload(const RouteInfo &route, const Request &request)
+RouteInfo Server::FileUploadRoute(const RouteInfo &route, const Request &request)
 {
     RouteInfo info = route;
     std::string upload_dir = route.upload_dir;

@@ -72,10 +72,14 @@ std::string Router::generateUploadFilename(const Request &request, Location *loc
         std::string disposition = request.getHeader("Content-Disposition");
         if (!disposition.empty())
         {
+            
+            std::cout<<"a"<<std::endl;
             size_t filename_pos = disposition.find("filename=\"");
 
             if (filename_pos != std::string::npos)
             {
+                std::cout<<"a"<<std::endl;
+
                 size_t start = filename_pos + 10;
                 size_t end = disposition.find("\"", start);
                 if (end != std::string::npos)
