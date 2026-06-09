@@ -56,15 +56,59 @@ void Server::initEpoll()
 	}
 }
 
-void handleClientError(Client *client, const HttpException &e)
+void Server::handleClientError(Client *client, const HttpException &e)
 {
 	if (!client)
 		return;
-	std::ostringstream oss;
-	oss << "HTTP/1.1 " << e.statusCode << " " << e.statusMessage << "\r\nContent-Length: 0\r\n\r\n";
-	std::string res = oss.str();
-	std::cerr << RED << "[" << e.statusMessage << "] " << RESET << e.what() << std::endl;
-	send(client->fd, res.c_str(), res.length(), 0);
+	//find the server block fo this cliet
+	ServerBlock *server_block = NULL;
+	if(client->listen_fd != -1)
+	{
+		if(fd_to_servers.find(client->listen_fd) != fd_to_servers.end())
+		{
+			if(fd_to_servers[client->listen_fd].size()>0)
+				server_block = fd_to_servers[client->listen_fd][0];
+		}
+	}
+
+	RouteInfo route_info;
+	route_info.location = NULL;
+	route_info.http_status = e.statusCode;
+	route_info.status_message = e.statusMessage;
+
+	std::string error_page_path = "";
+	
+	if(server_block)
+	{
+		Router router(&config);
+		error_page_path = router.resolveErrorPage(e.statusCode,server_block);
+	}
+
+	if(!error_page_path.empty())
+	{
+		route_info.action = SERVE_FILE;
+		route_info.file_path = error_page_path;
+	}
+	else if (e.statusCode == 405)
+    	route_info.action = ERROR_405;
+	else if (e.statusCode == 400)
+    	route_info.action = ERROR_400;
+	else if (e.statusCode == 500)
+    	route_info.action = ERROR_500;
+	else if (e.statusCode == 413)
+		route_info.action = ERROR_413;
+	else if(e.statusCode == 501)
+		route_info.action = ERROR_501;
+	else if(e.statusCode == 411)
+		route_info.action = ERROR_411;
+	else
+    	route_info.action = ERROR_404;
+
+	Response response(*this);
+	response.handleResponse(route_info,server_block ? server_block->error_pages : std::map<int,std::string>(),client);
+
+	std::string res = response.build();
+	send(client->fd, res.c_str(), res.size(), 0);
 }
 
 void Server::start()

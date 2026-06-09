@@ -1,25 +1,34 @@
 #include "Server.hpp"
 
-void Server::handleDeleteFile(int client_fd, const RouteInfo &route)
+RouteInfo Server::DeleteFile(const RouteInfo &route)
 {
-    Client *client = clients[client_fd];
-    std::string file_path = route.file_path;
+    RouteInfo info = route;
 
-    if (unlink(file_path.c_str()) != 0)
+    if (unlink(route.file_path.c_str()) != 0)
     {
         if (errno == EACCES)
-            client->response = buildErrorResponse(403, "Forbidden");
+        {
+            info.action = ERROR_403;
+            info.http_status = 403;
+            info.status_message = "Forbidden";
+        }
         else if (errno == ENOENT)
-            client->response = buildErrorResponse(404, "Not Found");
+        {
+            info.action = ERROR_404;
+            info.http_status = 404;
+            info.status_message = "Not Found";
+        }
         else
-            client->response = buildErrorResponse(500, "Internal Server Error");
-
-        return;
+        {
+            info.action = ERROR_500;
+            info.http_status = 500;
+            info.status_message = "Internal Server Error";
+        }
+        return info;
     }
-    client->response = "HTTP/1.1 204 No Content\r\n";
-    client->response += "Content-Length: 0\r\n";
-    client->response += "Connection: close\r\n";
-    client->response += "\r\n";
+    info.action = ERROR_200;
+    info.http_status = 204;
+    info.status_message = "No Content";
 
-    std::cout << "File deleted: " << file_path << std::endl;
+    return info;
 }

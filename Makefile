@@ -23,7 +23,6 @@ SRC = src/config/Parser.cpp \
 	src/server/HandleClient.cpp \
 	src/server/handleFileUpload.cpp \
 	src/server/handleDeleteFile.cpp \
-	src/server/buildResponse.cpp \
 	src/server/HandleCGI.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \

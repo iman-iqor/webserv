@@ -128,7 +128,7 @@ void Server::processRequest(int client_fd)
     }
 
     Response res(*this);
-    res.handleResponse(client_fd, route, server_block->error_pages, client);
+    res.handleResponse(route, server_block->error_pages, client);
     client->response = res.build();
 
     std::cout << "\033[32mPrepared response for client " << client_fd << ", switching to write mode\033[0m" << std::endl;
