@@ -9,9 +9,9 @@
 #include <signal.h>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
 #include <csignal>// This is for signal handling to gracefully shut down the server on SIGINT (Ctrl+C)
 #include <unistd.h>
+#include "webserv.h"
 
 
-volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit 
 void signalHandler(int signum) {
     (void)signum;  // Avoid unused parameter warning
     if (!g_shutdown)

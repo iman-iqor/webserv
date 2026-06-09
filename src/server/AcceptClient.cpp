@@ -13,10 +13,7 @@ void Server::acceptClient(int listen_fd)
 
     struct epoll_event event;
     event.events = EPOLLIN;
-    EpollData* data = new EpollData;
-    data->fd = client_fd;
-    data->type = CLIENT;
-    data->client = clients[client_fd];
+    EpollData* data = new EpollData(client_fd, CLIENT, clients[client_fd]);
     event.data.ptr = data;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) 

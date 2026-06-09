@@ -33,3 +33,17 @@ std::string& to_lower(std::string &s) {
     }
     return s;
 }
+
+std::string to_upper(const std::string &s) {
+    std::string result = s;
+    for (size_t i = 0; i < s.length(); ++i) {
+        result[i] = std::toupper(s[i]);
+    }
+    return result;
+}
+
+std::string ft_itoa(int n) {
+    std::stringstream ss;
+    ss << n;
+    return ss.str();
+}

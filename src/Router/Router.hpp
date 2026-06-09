@@ -40,7 +40,7 @@ struct RouteInfo
     int http_status;
     std::string status_message;//ok or not found li  7bit
     std::map<std::string,std::string> headers;//extra headers n9darnhtajom
-
+    std::string file_extension;//for cgi execution to determine the binary to use
 };
 
 class Router

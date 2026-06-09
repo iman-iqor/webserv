@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "../http/CgiHandler.hpp"
 
 void Server::handleClient(EpollData *data, uint32_t events)
 {
@@ -57,10 +58,7 @@ void Server::handleWrite(Client *client)
 
             struct epoll_event event;
             event.events = EPOLLOUT;
-            EpollData *data = new EpollData;
-            data->fd = client->fd;
-            data->type = CLIENT;
-            data->client = client;
+            EpollData *data = new EpollData(client->fd, CLIENT, client);
             event.data.ptr = data;
             epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
         }
@@ -71,12 +69,12 @@ void Server::handleRead(Client *client)
 {
 
     char buffer[4096];
-    int bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
+    ssize_t bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
 
     if (bytes > 0)
     {
         buffer[bytes] = '\0';
-        client->request.append_to_buffer(buffer);
+        client->request.append_request(buffer, bytes);
     }
     else
     {
@@ -116,16 +114,26 @@ void Server::processRequest(int client_fd)
     }
 
     RouteInfo route = router->route(client->request, server_block);
+    std::cout<<"Route action: "<<route.action<<" for client "<<client_fd<<std::endl;
+    std::cout<<"Route file path: "<<route.file_path<<" for client "<<client_fd<<std::endl;  
+
+    if (route.action == EXECUTE_CGI) {
+        std::string bin_path = route.location->cgi[route.file_extension.substr(1)]; // remove the dot from extension
+        if (bin_path.empty()) {
+            throw BadGatewayException("No CGI handler found for file extension: " + route.file_extension);
+        }
+        // TODO: Add handle if the file extension is not supported for CGI execution
+        CgiHandler::start(client, route.cgi_string, bin_path, epoll_fd, client->request.getHeaders());
+        return;
+    }
+
     Response res(*this);
     res.handleResponse(route, server_block->error_pages, client);
     client->response = res.build();
 
     std::cout << "\033[32mPrepared response for client " << client_fd << ", switching to write mode\033[0m" << std::endl;
     struct epoll_event event;
-    EpollData *data = new EpollData;
-    data->fd = client_fd;
-    data->type = CLIENT;
-    data->client = client;
+    EpollData *data = new EpollData(client_fd, CLIENT, client);
     event.data.ptr = data;
     event.events = EPOLLOUT;
     epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);

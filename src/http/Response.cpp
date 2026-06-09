@@ -54,7 +54,7 @@ std::string Response::build()
     return ss.str();
 }
 
-// void Response::handleResponse(int client_fd, const RouteInfo& info, CgiResponse_t& cgi_output, const std::map<int, std::string> error_pages, Client &client)
+// void Response::handleResponse(int client_fd, const RouteInfo& info, CgiResponse_t* cgi_output, const std::map<int, std::string> error_pages, Client *client)
 
 void Response::handleResponse(const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client)
 {
