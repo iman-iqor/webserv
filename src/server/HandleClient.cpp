@@ -69,12 +69,12 @@ void Server::handleRead(Client *client)
 {
 
     char buffer[4096];
-    int bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
+    ssize_t bytes = recv(client->fd, buffer, sizeof(buffer) - 1, 0);
 
     if (bytes > 0)
     {
         buffer[bytes] = '\0';
-        client->request.append_to_buffer(buffer);
+        client->request.append_request(buffer, bytes);
     }
     else
     {
