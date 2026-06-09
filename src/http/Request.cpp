@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <sys/socket.h>
 #include <algorithm>
-#include <fstream>
 #include "../../webserv.h"
 
 #define BUFFER_SIZE 4096
@@ -24,6 +23,7 @@ Request::Request( void )
 	_content_length = 0;
 	_location = NULL;
 	_read_bytes = 0;
+	_body_is_set = false;
 	_parse[READ_START_LINE] = &Request::extract_first_line;
 	_parse[READ_HEADERS] = &Request::extract_headers;
 	_parse[READ_PLAIN_BODY] = &Request::extract_plain_body;
@@ -57,17 +57,17 @@ const std::string& Request::get_method( void ) const
 
 ssize_t Request::read_to_mem( const char *s, ssize_t size )
 {
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << _buffer.size() << " bytes into buffer" << std::endl;;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into buffer" << std::endl;;
 	if (_body_size + static_cast<size_t>(size) > _content_length)
 		size = _content_length - _body_size;
-	_buffer.append(s, size);
+	_body.append(s, size);
 	_body_size += size;
 	return size;
 }
 
 ssize_t Request::read_to_file( const char *s, ssize_t size )
 {
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << _buffer.size() << " bytes into file" << std::endl;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into file" << std::endl;
 	if (!_outfile.is_open())
 		throw InternalServerErrorException("Temporary file for request body is not open");
 	if (_body_size + static_cast<size_t>(size) > _content_length)
@@ -79,9 +79,8 @@ ssize_t Request::read_to_file( const char *s, ssize_t size )
 
 void Request::append_request( const char *s, ssize_t size )
 {
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << _buffer.size() << std::endl;
-	(this->*_read[_read_method])(s, size);
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << _buffer.size() << std::endl;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << size << std::endl;
+	_buffer.append(s, size);
 	_parser();
 }
 
@@ -131,22 +130,22 @@ const std::string& Request::get_http_version(void) const
 
 void Request::start_save_to_file( void )
 {
-	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Saving request body to file: " << filename << std::endl;
+	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " creating temporary file for request body" << std::endl;
 	_read_method = READ_TO_FIL;
 	char buf[17];
 	std::ifstream file("/dev/urandom");
 	if (!file.is_open())
 		throw InternalServerErrorException("Failed to open /dev/urandom for generating temporary filename");
-	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << filename << std::endl;
 	file.read(buf, 16);
 	buf[16] = '\0';
 	file.close();
-	filename = "tmp/request_" + std::string(buf) + ".tmp";
+	filename = "/tmp/request_" + std::string(buf) + ".tmp";
+	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << filename << std::endl;
 	// use file.seekg(0, std::ios::beg); to reset the file pointer to the beginning of the file before reading again if needed, since we have already read 16 bytes from /dev/urandom to generate the filename. This ensures that we can read from /dev/urandom again if we need to generate another filename in the future without any issues.
-	_outfile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::in);
+	_outfile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
 	if (!_outfile.is_open())
 		throw InternalServerErrorException("Failed to create temporary file for request body");
-	unlink(filename.c_str());
+	// unlink(filename.c_str());
 }
 
 bool Request::extract_headers( void )
@@ -205,14 +204,14 @@ RequestState Request::get_state( void ) const
 
 bool Request::extract_plain_body( void )
 {
-	if (_buffer.length() < _content_length)
+	(this->*_read[_read_method])(_buffer.c_str(), _buffer.size());
+	if (_body_size < _content_length)
 		return (false);
-	_body = _buffer;
 	_state = FINISHED;
 	if (DEBUG) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Plain body parsed, bytes=" << _body.size() << std::endl;
 	_pos = 0;
 	_buffer.clear();
-	if (_body.size() == _content_length)
+	if (_body_size == _content_length)
 		_state = FINISHED;
 	else
 		throw BadRequestException("Body size does not match Content-Length");
@@ -221,7 +220,10 @@ bool Request::extract_plain_body( void )
 
 bool Request::extract_chunked_body( void )
 {
+	std::string dechunked_body;
+
 	while (true) {
+		size_t chunk_start = _pos;
 		size_t n = _buffer.find("\r\n", _pos);
 		if (n == std::string::npos) {			// if i can't find the next line SEP, return and wait for more data to arrive
 			if (_pos != 0) { 					// if i have already parsed some chunk, but the next chunk size line is not complete, keep the unprocessed part in the buffer for the next parsing round
@@ -240,13 +242,14 @@ bool Request::extract_chunked_body( void )
 			break;
 		}
 		if (_buffer.size() - _pos >= (size_t)chunk_size) {
-			_body += _buffer.substr(_pos, chunk_size);
+			std::string chunk = _buffer.substr(_pos, chunk_size);
+			(this->*_read[_read_method])(chunk.c_str(), chunk.size());
 			_pos += chunk_size + 2;
 		}
 		else {
-			_body += _buffer.substr(_pos);
-			chunk_size -= _buffer.size() - _pos;
-			_pos = _buffer.size();
+			_buffer = _buffer.substr(chunk_start);
+			_pos = 0;
+			return (false);
 		}
 		if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
 	}
@@ -264,8 +267,22 @@ const std::string& Request::getHeader(const std::string &name) const
     return _headers->getHeader(name);
 }
 
-const std::string& Request::get_body(void) const
+std::string& Request::get_body(void)
 {
+	if (_read_method == READ_TO_FIL && _body_is_set == false) {
+		if (!_outfile.is_open())
+			throw InternalServerErrorException("Temporary file for request body is not open");
+		_outfile.clear();
+		_outfile.seekg(0, std::ios::beg);
+		char buf[BUFFER_SIZE];
+		while (_outfile.read(buf, sizeof(buf))) {
+			_body.append(buf, _outfile.gcount());
+		}
+		if (_outfile.gcount() > 0) {
+			_body.append(buf, _outfile.gcount());
+		}
+		_body_is_set = true;
+	}
     return _body;
 }
 

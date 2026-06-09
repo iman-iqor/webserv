@@ -2,6 +2,7 @@
 #define REQUEST_HPP
 
 #include <unistd.h>
+#include <fstream>
 #include "Header.hpp"
 #include "Exceptions.hpp"
 #include "../config/Config.hpp"
@@ -35,7 +36,7 @@ class Request {
 	std::string _raw_bytes;
 	std::string filename;
     std::string _buffer;
-	std::ofstream _outfile;
+	std::fstream _outfile;
 	size_t _body_size;
     size_t _pos;
 	size_t _content_length;
@@ -44,6 +45,7 @@ class Request {
 	RequestState _state;
 	Location *_location;
 	ReadMethod _read_method;
+	bool _body_is_set;
 	
     ssize_t (Request::*_read[2])( const char *buffer, ssize_t size );
     bool (Request::*_parse[4])( void );
@@ -65,7 +67,7 @@ public:
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
 	const std::string& getHeader(const std::string &name) const;
-	const std::string& get_body(void) const;
+	std::string& get_body(void);
 	const std::string& get_http_version(void) const;
 	RequestState get_state( void ) const ;
 	std::map<std::string, std::string> &getHeaders();

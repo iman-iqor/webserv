@@ -29,7 +29,7 @@ print(f"""<!DOCTYPE html>\r
     </ul>\r
     <h2>Environment:</h2>\r
     <ul>\r
-        <li>METHOD: {os.environ.get('REQUEST_METHOD', 'N/A')}</li>\r
+        <li>METHOD: {os.environ.get('HTTP_REQUEST_METHOD', 'N/A')}</li>\r
         <li>CONTENT_TYPE: {os.environ.get('CONTENT_TYPE', 'N/A')}</li>\r
         <li>CONTENT_LENGTH: {os.environ.get('CONTENT_LENGTH', 'N/A')}</li>\r
     </ul>\r

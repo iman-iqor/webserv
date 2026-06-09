@@ -12,7 +12,7 @@ uploaded files
 CGI output
 */
 
-void Server::handleFileUpload(int client_fd, const RouteInfo &route, const Request &request)
+void Server::handleFileUpload(int client_fd, const RouteInfo &route, Request &request)
 {
     std::cout << "inside handle file upload" << std::endl;
     Client *client = clients[client_fd];
