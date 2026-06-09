@@ -58,7 +58,7 @@ std::string Router::resolveFilePath(const std::string &path, Location *location)
             relative_path = "/";
         }
     }
-    std::string full_path = location->root + "/" + relative_path;
+    std::string full_path = location->root  + relative_path;
     return full_path;
 }
 

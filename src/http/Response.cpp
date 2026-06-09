@@ -74,7 +74,7 @@ void Response::handleResponse(const RouteInfo& info, const std::map<int, std::st
     switch (info.action)
     {
         case SERVE_FILE:
-            this->serveFile(info.file_path, error_pages);
+            this->serveFile(info.file_path, error_pages, info);
             break;
         case REDIRECT:
             handleRedirect(info);
@@ -94,8 +94,9 @@ void Response::handleResponse(const RouteInfo& info, const std::map<int, std::st
     
 }
 
-void Response::serveFile(const std::string& file_path, const std::map<int, std::string> error_pages)
+void Response::serveFile(const std::string& file_path, const std::map<int, std::string> error_pages,RouteInfo info)
 {
+    std::cout << "Serving file: " << file_path << std::endl;
     std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
     if(!file.is_open())
     {
@@ -106,9 +107,12 @@ void Response::serveFile(const std::string& file_path, const std::map<int, std::
     std::stringstream ss;
     ss << file.rdbuf();
     file.close();
-    this->setStatus(200, "OK");
+    this->setStatus(info.http_status, info.status_message);
     this->setHeader("Content-Type", MimeType(file_path));
-    this->setBody(ss.str());
+    if(info.isHead)
+        this->setBody("");
+    else
+        this->setBody(ss.str());
 }
 
 

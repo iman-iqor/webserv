@@ -40,7 +40,7 @@ class Response
         std::string build();
         void handleResponse(const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client);
         void handleAutoIndex(const RouteInfo &info);
-        void serveFile(const std::string &file_path, const std::map<int, std::string > error_pages);
+        void serveFile(const std::string &file_path, const std::map<int, std::string > error_pages, RouteInfo info);
         void ErrorResponse(int code, const std::string &msg, const std::map<int, std::string > error_pages);
         std::string MimeType(const std::string &path);
         void handleRedirect(const RouteInfo &info);

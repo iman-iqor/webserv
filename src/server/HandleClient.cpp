@@ -54,14 +54,9 @@ void Server::handleWrite(Client *client)
         }
         else
         {
-
             struct epoll_event event;
             event.events = EPOLLOUT;
-            EpollData *data = new EpollData;
-            data->fd = client->fd;
-            data->type = CLIENT;
-            data->client = client;
-            event.data.ptr = data;
+            event.data.ptr = epoll_data[client->fd];
             epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
         }
     }
@@ -122,12 +117,8 @@ void Server::processRequest(int client_fd)
 
     std::cout << "\033[32mPrepared response for client " << client_fd << ", switching to write mode\033[0m" << std::endl;
     struct epoll_event event;
-    EpollData *data = new EpollData;
-    data->fd = client_fd;
-    data->type = CLIENT;
-    data->client = client;
-    event.data.ptr = data;
     event.events = EPOLLOUT;
+    event.data.ptr = epoll_data[client_fd];
     epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
     std::cout << "\033[32mClient " << client_fd << " is now ready to send response\033[0m" << std::endl;
 }

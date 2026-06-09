@@ -3,16 +3,19 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
 {
     RouteInfo route_info;
     route_info.location = location;
-
+    if(request.get_method()=="HEAD")
+        route_info.isHead=true;
     std::string file_path = resolveFilePath(request.get_path(), location);
     std::cout << "resolved file path: " << file_path << std::endl;
     if (!fileExists(file_path))
     {
+        std::cout << "File does not exist: " << file_path << std::endl;
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
         std::string error_page=resolveErrorPage(404,server_block);
         if (!error_page.empty())
         {
+            std::cout<<"olala"<<std::endl;
             route_info.action = SERVE_FILE;
             route_info.file_path = error_page;
         }
@@ -45,9 +48,9 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
             return route_info;
         }
 
-        route_info.http_status = 403;
-        route_info.status_message = "Forbidden";
-        std::string error_page=resolveErrorPage(403,server_block);
+        route_info.http_status = 404;
+        route_info.status_message = "Not Found";
+        std::string error_page=resolveErrorPage(404,server_block);
         if (!error_page.empty())
         {
             route_info.action = SERVE_FILE;

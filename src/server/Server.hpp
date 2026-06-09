@@ -51,6 +51,7 @@ private:
 
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock *> > fd_to_servers;
+    std::map<int, EpollData *> epoll_data;
     Router *router;
 
 public:

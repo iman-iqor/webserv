@@ -3,7 +3,7 @@
 Server::Server(Config &config)
 {
 	this->config = config;
-	router = new Router(&config);
+	router = new Router(&this->config);
 	epoll_fd = -1;
 }
 
@@ -174,6 +174,11 @@ void Server::closeClient(int fd)
 	{
 		delete clients[fd];
 		clients.erase(fd);
+	}
+	if (epoll_data.find(fd) != epoll_data.end())
+	{
+		delete epoll_data[fd];
+		epoll_data.erase(fd);
 	}
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);

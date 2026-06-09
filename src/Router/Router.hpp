@@ -39,6 +39,7 @@ struct RouteInfo
     Location *location;//the location block that matched the request
     int http_status;
     std::string status_message;//ok or not found li  7bit
+    bool isHead;
     std::map<std::string,std::string> headers;//extra headers n9darnhtajom
 
 };
