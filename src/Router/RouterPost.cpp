@@ -27,12 +27,13 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     std::string extension = getFileExtension(file_path);
     std::cout << "extension: " << extension << std::endl;
 
-    if (!location->cgi.empty() && location->cgi.count(extension) > 0)
+    if (!location->cgi.empty())
     {
         std::cout << "inside cgi" << std::endl;
         if (fileExists(file_path) && isExecutable(file_path))
         {
             // execute cgi with post data
+            route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.http_status = 200;

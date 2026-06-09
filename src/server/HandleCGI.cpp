@@ -154,7 +154,9 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 			const std::string& body = client->request.get_body();
 			ssize_t bytes_to_send = client->request.get_content_length() - cgi_state->body_sent;
 			ssize_t bytes_written = write(cgi_state->req_w_fd, body.c_str() + cgi_state->body_sent, bytes_to_send);
-			
+			if (bytes_written < 0) {
+				throw InternalServerErrorException("Failed to write to CGI input pipe");
+			}
 			if (bytes_written > 0)
 			{
 				cgi_state->body_sent += bytes_written;

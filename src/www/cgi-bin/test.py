@@ -9,18 +9,28 @@ def main():
     print("\r\n", end="")  # Empty line to separate headers from body
     
     # Print the response body
-    user_name = os.environ.get("SCRIPT_NAME", "Guest")
-    query_string = os.environ.get("QUERY_STRING", "")
-    request_method = os.environ.get("REQUEST_METHOD", "GET")
-    server_software = os.environ.get("SERVER_SOFTWARE", "webserv/1.0")
+    # user_name = os.environ.get("HTTP_SCRIPT_NAME")
+    # query_string = os.environ.get("HTTP_QUERY_STRING")
+    # request_method = os.environ.get("HTTP_REQUEST_METHOD")
+    # server_name = os.environ.get("HTTP_SERVER_NAME")
+    # server_port = os.environ.get("HTTP_SERVER_PORT")
+    # server_protocol = os.environ.get("HTTP_SERVER_PROTOCOL")
+    # server_software = os.environ.get("HTTP_SERVER_SOFTWARE")
+    # gateway_interface = os.environ.get("HTTP_GATEWAY_INTERFACE")
+
+    # get the rest of the environment variables
+    env_vars = {key: value for key, value in os.environ.items()}
     
+    # add all the environment variables to the response body
+    env_html = "".join(f"<tr><td>{key}</td><td>{value}</td></tr>" for key, value in env_vars.items())
+    # make the table with scroll
     print("""<!DOCTYPE html>\r
 <html>\r
 <head>\r
     <title>CGI Test Response</title>\r
     <style>\r
         body { font-family: sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }\r
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 600px; }\r
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 600px; overflow-x: auto; }\r
         h1 { color: #007acc; }\r
         table { width: 100%; border-collapse: collapse; }\r
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }\r
@@ -34,11 +44,7 @@ def main():
         \r
         <h2>Environment Variables:</h2>\r
         <table>\r
-            <tr><th>Variable</th><th>Value</th></tr>\r
-            <tr><td>REQUEST_METHOD</td><td>""" + request_method + """</td></tr>\r
-            <tr><td>SCRIPT_NAME</td><td>""" + user_name + """</td></tr>\r
-            <tr><td>QUERY_STRING</td><td>""" + (query_string if query_string else "(empty)") + """</td></tr>\r
-            <tr><td>SERVER_SOFTWARE</td><td>""" + server_software + """</td></tr>\r
+            """ + env_html + """
         </table>\r
         \r
         <hr>\r

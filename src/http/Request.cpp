@@ -93,6 +93,11 @@ bool Request::extract_first_line( void )
 	return true;
 }
 
+const std::string& Request::get_http_version(void) const
+{
+	return _http_version;
+}
+
 bool Request::extract_headers( void )
 {
 	size_t sp_pos = _buffer.find("\r\n\r\n");

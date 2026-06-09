@@ -1,6 +1,18 @@
 #include "CgiHandler.hpp"
 #include "../../webserv.h"
 
+std::string create_http_key(const std::string &key) {
+	std::string http_key = to_upper(key);
+	for (size_t i = 0; i < http_key.size(); i++) {
+		if (http_key[i] == '-') {
+			http_key[i] = '_';
+		}
+	}
+	if (http_key == "CONTENT_TYPE" || http_key == "CONTENT_LENGTH") {
+		return http_key;
+	}
+	return "HTTP_" + http_key;
+}
 
 char **CgiHandler::build_envp(const std::map< std::string, std::string > &env_map) {
 	if (DEBUG) std::cout << GREEN << "Building envp for CGI execution..." << RESET << std::endl;
@@ -8,7 +20,9 @@ char **CgiHandler::build_envp(const std::map< std::string, std::string > &env_ma
 	int i = 0;
 	std::map<std::string, std::string>::const_iterator it = env_map.begin();
 	for (; it != env_map.end(); it++) {
-		std::string env_entry = it->first + "=" + it->second;
+		std::string key = create_http_key(it->first);
+		std::string value = it->second;
+		std::string env_entry = key + "=" + value;
 		envp[i] = new char[env_entry.size() + 1];
 		std::strcpy(envp[i], env_entry.c_str());
 		if (DEBUG) std::cout << "  " << envp[i] << std::endl; // Debug print of each environment variable
@@ -72,6 +86,19 @@ void open_pipe(CgiState_t *cgi_state, int fds[2])
 	}
 }
 
+std::map<std::string, std::string> build_full_env_map(Client *client, const std::string &cgi_script, const std::map<std::string, std::string> &base_env) {
+	std::map<std::string, std::string> full_env_map = base_env;
+	full_env_map["SCRIPT_NAME"] = cgi_script;
+	full_env_map["QUERY_STRING"] = "";
+	full_env_map["REQUEST_METHOD"] = client->request.get_method();
+	full_env_map["SERVER_NAME"] = client->request.getHeader("Host");
+	full_env_map["SERVER_PORT"] = ft_itoa(client->listen_fd);
+	full_env_map["SERVER_PROTOCOL"] = client->request.get_http_version();
+	full_env_map["SERVER_SOFTWARE"] = "webserv/1.0";
+	full_env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
+	return full_env_map;
+}
+
 CgiState_t *CgiHandler::start(
 	Client *client,
 	const std::string &cgi_path,
@@ -125,7 +152,8 @@ CgiState_t *CgiHandler::start(
 		size_t last_slash_pos = cgi_path.find_last_of('/');
 		std::string cgi_dir = cgi_path.substr(0, last_slash_pos);
 		std::string cgi_script = cgi_path.substr(last_slash_pos + 1);
-		char **envp = build_envp(env_map);
+		std::map<std::string, std::string> full_env_map = build_full_env_map(client, cgi_script, env_map);
+		char **envp = build_envp(full_env_map);
 		char **argv = build_args(cgi_script, bin_path);
 		dup2(null_fd, STDERR_FILENO); // Redirect CGI child's stderr to /dev/null if there's no request body
 		close(null_fd);
@@ -173,7 +201,6 @@ CgiState_t *CgiHandler::start(
 
 	if (is_post_with_body) {
 		// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
-		set_non_blocking(cgi_state->fdi[1]);
 		struct epoll_event req_event;
 		req_event.events = EPOLLOUT;
 		EpollData* req_data = new EpollData(client->cgi_state->fdi[1], CGI_PIPE, client);
