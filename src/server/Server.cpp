@@ -1,4 +1,6 @@
 #include "Server.hpp"
+volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a shutdown signal is received, allowing the server's main loop to exit 
+
 
 Server::Server(Config &config)
 {
@@ -47,10 +49,11 @@ void Server::initEpoll()
 
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		EpollData *data = new EpollData;
+		EpollData *data = new EpollData();
 		data->fd = listen_fds[i];
 		data->type = SERVER;
 		data->client = NULL;
+		epoll_data[listen_fds[i]] = data;
 		event.data.ptr = data;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1)
 			throw std::runtime_error("epoll_ctl ADD failed");
@@ -131,11 +134,13 @@ void Server::start()
 			try
 			{
 				handleEvent(events[i]);
+				
 			}
 			catch (const HttpException &e)
 			{
 				// events[i].data.fd is not valid when we stored a pointer in data.ptr.
 				// Retrieve the EpollData pointer and use its fd to find the client.
+				std::cerr << RED << "HTTP error: " << e.statusCode << " " << e.statusMessage << ": " << e.what() << RESET << std::endl;
 				EpollData *ed = NULL;
 				if (events[i].data.ptr)
 					ed = static_cast<EpollData *>(events[i].data.ptr);

@@ -32,11 +32,12 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     // check for CGI scripts cause post can trigger CGI a bro
     std::string extension = getFileExtension(file_path);
 
-    if (!location->cgi.empty() && location->cgi.count(extension) > 0)
+    if (!location->cgi.empty())
     {
         if (fileExists(file_path) && isExecutable(file_path))
         {
             // execute cgi with post data
+            route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.http_status = 200;

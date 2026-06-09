@@ -69,7 +69,7 @@ public:
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
-    RouteInfo FileUploadRoute(const RouteInfo &route, const Request &request);
+    RouteInfo FileUploadRoute(const RouteInfo &route, Request &request);
     RouteInfo DeleteFile(const RouteInfo &route);
     void handleClientError(Client *client, const HttpException &e);
 

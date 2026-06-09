@@ -62,10 +62,12 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     }
 
     std::string extension = getFileExtension(file_path);
-    if (!location->cgi.empty() && location->cgi.count(extension) > 0)
+    if (!location->cgi.empty())
     {
+        std::cout << "\033[31mfound CGI handler for extension " << extension << "\033[31m" << std::endl;
         if (isExecutable(file_path))
         {
+            route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.http_status = 200;
