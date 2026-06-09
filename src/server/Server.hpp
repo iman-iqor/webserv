@@ -70,6 +70,7 @@ public:
     void processRequest(int client_fd);
     RouteInfo FileUploadRoute(const RouteInfo &route, const Request &request);
     RouteInfo DeleteFile(const RouteInfo &route);
+    void handleClientError(Client *client, const HttpException &e);
 
     void closeClient(int fd);
     std::string intToString(size_t n);

@@ -106,7 +106,7 @@ void Server::handleClientError(Client *client, const HttpException &e)
     	route_info.action = ERROR_404;
 
 	Response response(*this);
-	response.handleResponse(client->fd,route_info,server_block ? server_block->error_pages : std::map<int,std::string>(),client);
+	response.handleResponse(route_info,server_block ? server_block->error_pages : std::map<int,std::string>(),client);
 
 	std::string res = response.build();
 	send(client->fd, res.c_str(), res.size(), 0);
