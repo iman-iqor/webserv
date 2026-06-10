@@ -8,10 +8,10 @@ std::string create_http_key(const std::string &key) {
 			http_key[i] = '_';
 		}
 	}
-	if (http_key == "CONTENT_TYPE" || http_key == "CONTENT_LENGTH") {
-		return http_key;
-	}
-	return "HTTP_" + http_key;
+	// if (http_key == "CONTENT_TYPE" || http_key == "CONTENT_LENGTH" || http_key == "REQUEST_METHOD" || http_key == "QUERY_STRING" || http_key == "SCRIPT_NAME") {
+	// 	return http_key;
+	// }
+	return http_key;
 }
 
 char **CgiHandler::build_envp(const std::map< std::string, std::string > &env_map) {
@@ -25,7 +25,7 @@ char **CgiHandler::build_envp(const std::map< std::string, std::string > &env_ma
 		std::string env_entry = key + "=" + value;
 		envp[i] = new char[env_entry.size() + 1];
 		std::strcpy(envp[i], env_entry.c_str());
-		if (DEBUG) std::cout << "  " << envp[i] << std::endl; // Debug print of each environment variable
+		std::cout << "  " << envp[i] << std::endl; // Debug print of each environment variable
 		i++;
 	}
 	envp[i] = NULL;
@@ -87,15 +87,18 @@ void open_pipe(CgiState_t *cgi_state, int fds[2])
 }
 
 std::map<std::string, std::string> build_full_env_map(Client *client, const std::string &cgi_script, const std::map<std::string, std::string> &base_env) {
+	(void) cgi_script; // Unused parameter, but may be needed for future enhancements
 	std::map<std::string, std::string> full_env_map = base_env;
-	full_env_map["SCRIPT_NAME"] = cgi_script;
+	full_env_map["SCRIPT_NAME"] = client->request.get_path();
 	full_env_map["QUERY_STRING"] = "";
 	full_env_map["REQUEST_METHOD"] = client->request.get_method();
-	full_env_map["SERVER_NAME"] = client->request.getHeader("Host");
+	full_env_map["SERVER_NAME"] = client->request.getHeader("host");
 	full_env_map["SERVER_PORT"] = ft_itoa(client->listen_fd);
 	full_env_map["SERVER_PROTOCOL"] = client->request.get_http_version();
 	full_env_map["SERVER_SOFTWARE"] = "webserv/1.0";
 	full_env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
+	full_env_map["PATH_INFO"] = "youpi.bla";
+	// full_env_map["PATH_TRANSLATED"] = "/home/rabounou/Projects/webserv/YoupiBanane/youpi.bla";
 	return full_env_map;
 }
 
@@ -157,11 +160,20 @@ CgiState_t *CgiHandler::start(
 		char **argv = build_args(cgi_script, bin_path);
 		dup2(null_fd, STDERR_FILENO); // Redirect CGI child's stderr to /dev/null if there's no request body
 		close(null_fd);
-		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
-		if (is_post_with_body)
-			dup2(cgi_state->fdi[0], STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
-		chdir(cgi_dir.c_str());
+		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe // Close read end of response pipe in child
+		if (is_post_with_body) {
+			int fd = open(client->request.filename.c_str(), O_RDONLY);
+			dup2(fd, STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
+			close(fd);
+		}
+		std::cout << RED << "Chanding dir to: " << cgi_dir << " for CGI execution." << RESET << std::endl; // Debug print of chdir operation
+		if (chdir(cgi_dir.c_str()) == -1) {
+			free_envp(envp);
+			free_args(argv);
+			throw std::runtime_error("Failed to change directory for CGI execution");
+		}
 		execve(bin_path.c_str(), argv, envp);
+		throw std::runtime_error("Failed to execute CGI script");
 		free_envp(envp);
 		free_args(argv);
 		// WARNING: more cleaning needed
@@ -186,9 +198,9 @@ CgiState_t *CgiHandler::start(
 	data->client = client;
 	data->fd = cgi_state->fdo[0];
 	data->type = CGI_PIPE;
-	event.data.ptr = data;
 	data->client->cgi_state = cgi_state; // Store CGI state in EpollData for access in event handler
-
+	event.data.ptr = data;
+	
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdo[0], &event) == -1) {
 		if (is_post_with_body && cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
 		close(cgi_state->fdo[0]);
@@ -199,28 +211,28 @@ CgiState_t *CgiHandler::start(
 		std::cout << GREEN << "Successfully added CGI output pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding to epoll
 	}
 
-	if (is_post_with_body) {
-		// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
-		struct epoll_event req_event;
-		req_event.events = EPOLLOUT;
-		EpollData* req_data = new EpollData();
-		req_data->client = client;
-		req_data->fd = cgi_state->fdi[1];
-		req_data->type = CGI_PIPE;
-		req_data->client->cgi_state = cgi_state;
-		req_event.data.ptr = req_data;
+	// if (is_post_with_body) {
+	// 	// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
+	// 	struct epoll_event req_event;
+	// 	req_event.events = EPOLLOUT;
+	// 	EpollData* req_data = new EpollData();
+	// 	req_data->client = client;
+	// 	req_data->fd = cgi_state->fdi[1];
+	// 	req_data->type = CGI_PIPE;
+	// 	req_data->client->cgi_state = cgi_state;
+	// 	req_event.data.ptr = req_data;
 
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {
-			if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
-			close(cgi_state->fdo[0]);
-			kill(pid, SIGKILL);
-			delete data;
-			delete req_data;
-			throw std::runtime_error("epoll_ctl error");
-		} else if (DEBUG) {
-			std::cout << GREEN << "Successfully added CGI request pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding request pipe to epoll
-		}
-	}
+	// 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {
+	// 		if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
+	// 		close(cgi_state->fdo[0]);
+	// 		kill(pid, SIGKILL);
+	// 		delete data;
+	// 		delete req_data;
+	// 		throw std::runtime_error("epoll_ctl error");
+	// 	} else if (DEBUG) {
+	// 		std::cout << GREEN << "Successfully added CGI request pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding request pipe to epoll
+	// 	}
+	// }
 
 	// Update cgi_state with the fork result and return
 	cgi_state->pid = pid;

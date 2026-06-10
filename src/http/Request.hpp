@@ -7,7 +7,7 @@
 #include "Exceptions.hpp"
 #include "../config/Config.hpp"
 
-#define BODY_LIMIT 8192 // 8KB
+#define BODY_LIMIT 100 // 8KB
 
 enum RequestState {
 	READ_START_LINE,	// Parse first line: "METHOD SP TARGET SP HTTP/VERSION\r\n"
@@ -34,9 +34,7 @@ class Request {
     std::string _http_version;
     std::string _body;
 	std::string _raw_bytes;
-	std::string filename;
     std::string _buffer;
-	std::fstream _outfile;
 	size_t _body_size;
     size_t _pos;
 	size_t _content_length;
@@ -46,11 +44,14 @@ class Request {
 	Location *_location;
 	ReadMethod _read_method;
 	bool _body_is_set;
+	std::fstream _outfile;
 	
     ssize_t (Request::*_read[2])( const char *buffer, ssize_t size );
     bool (Request::*_parse[4])( void );
 
 public:
+	std::string filename;
+
 	Request( void );
 	~Request( void );
     void _parser( void );

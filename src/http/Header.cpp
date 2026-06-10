@@ -116,13 +116,34 @@ void Header::_header_pair_parser( const std::string &s, char del)
         if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Parsing Cookie header" << std::endl;
         _cookies_parser(value);
     }
-    else if (_headers.find(key) != _headers.end() && _headers[key] != "") {
+    else if (hasHeader(key) && _headers[key] != "") {
         _headers[key] += ", " + value;
         if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Merged duplicated header: " << key << std::endl;
     }
     else {
         _headers[key] = value;
         if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Stored header: " << key << "=" << value << std::endl;
+    }
+}
+
+void Header::setHeader( const std::string &key, const std::string &value )
+{
+    std::string lower_key = key;
+    to_lower(lower_key);
+    if (lower_key.empty() || !is_valid_key(lower_key)) {
+        throw BadRequestException("Invalid header key: " + key);
+    }
+    std::string tvalue = trim(value);
+    if (has_any(tvalue, "\r\n")) {
+        throw BadRequestException("Invalid header value for key " + key);
+    }
+    if (hasHeader(key) && _headers[key] != "") {
+        _headers[key] += ", " + tvalue;
+        if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Merged duplicated header: " << key << std::endl;
+    }
+    else {
+        _headers[key] = tvalue;
+        if (VERBOS) std::cout << MAGENTA << "[HEADER]" << RESET << " Stored header: " << key << "=" << tvalue << std::endl;
     }
 }
 

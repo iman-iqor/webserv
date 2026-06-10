@@ -7,10 +7,6 @@
 
 #define BUFFER_SIZE 4096
 
-#ifndef DEBUG
-# define DEBUG false
-#endif
-
 Request::Request( void )
 {
 	_read_method = READ_TO_MEM;
@@ -57,24 +53,18 @@ const std::string& Request::get_method( void ) const
 
 ssize_t Request::read_to_mem( const char *s, ssize_t size )
 {
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into buffer" << std::endl;;
-	if (_body_size + static_cast<size_t>(size) > _content_length)
-		size = _content_length - _body_size;
-	_body.append(s, size);
-	_body_size += size;
-	return size;
+    _body.append(s, size);
+    _body_size += size;
+    return size;
 }
 
 ssize_t Request::read_to_file( const char *s, ssize_t size )
 {
-	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into file" << std::endl;
-	if (!_outfile.is_open())
-		throw InternalServerErrorException("Temporary file for request body is not open");
-	if (_body_size + static_cast<size_t>(size) > _content_length)
-		size = _content_length - _body_size;
-	_outfile.write(s, size);
-	_body_size += size;
-	return size;
+    if (!_outfile.is_open())
+        throw InternalServerErrorException("Temporary file for request body is not open");
+    _outfile.write(s, size);
+    _body_size += size;
+    return size;
 }
 
 void Request::append_request( const char *s, ssize_t size )
@@ -132,14 +122,18 @@ void Request::start_save_to_file( void )
 {
 	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " creating temporary file for request body" << std::endl;
 	_read_method = READ_TO_FIL;
-	char buf[17];
-	std::ifstream file("/dev/urandom");
-	if (!file.is_open())
-		throw InternalServerErrorException("Failed to open /dev/urandom for generating temporary filename");
-	file.read(buf, 16);
-	buf[16] = '\0';
-	file.close();
-	filename = "/tmp/request_" + std::string(buf) + ".tmp";
+	// char buf[17];
+	// std::ifstream file("/dev/urandom");
+	// if (!file.is_open())
+	// 	throw InternalServerErrorException("Failed to open /dev/urandom for generating temporary filename");
+	// file.read(buf, 16);
+	// buf[16] = '\0';
+	// file.close();
+
+	filename = "/tmp/debug.txt";
+	// if (DEBUG)
+	// else
+	// 	filename = "/tmp/request_" + std::string("buf") + ".tmp";
 	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << filename << std::endl;
 	// use file.seekg(0, std::ios::beg); to reset the file pointer to the beginning of the file before reading again if needed, since we have already read 16 bytes from /dev/urandom to generate the filename. This ensures that we can read from /dev/urandom again if we need to generate another filename in the future without any issues.
 	_outfile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
@@ -165,7 +159,7 @@ bool Request::extract_headers( void )
 			_state = READ_CHUNK_BODY;
 		else
 			throw NotImplementedException("Transfer-Encoding not supported");
-		_read_bytes = BUFFER_SIZE;
+		start_save_to_file();
 		if (DEBUG) std::cout << MAGENTA << "[REQUEST]" << RESET << " Using chunked body parser" << std::endl;
 	}
 	else if (_headers->hasHeader("content-length")) {
@@ -179,10 +173,10 @@ bool Request::extract_headers( void )
 			_state = FINISHED;
 		else
 		{
-			if (n > BODY_LIMIT)
-				start_save_to_file();
 			_state = READ_PLAIN_BODY;
 		}
+		if (n > BODY_LIMIT)
+			start_save_to_file();
 		if (DEBUG) std::cout << MAGENTA << "[REQUEST]" << RESET << " Content-Length=" << _content_length << std::endl;
 	}
 	else if (_method == "POST")
@@ -221,38 +215,76 @@ bool Request::extract_plain_body( void )
 bool Request::extract_chunked_body( void )
 {
 	std::string dechunked_body;
-
+	if (DEBUG) std::cout << BOLD_RED << "[REQUEST]" << RESET << " Starting chunked body parsing, buffer size=" << _buffer.size() << std::endl;
+	if (DEBUG) std::cout << BOLD_RED << "[REQUEST]" << RESET << " _body_size: " << _body_size << std::endl;
+	// if (_body_size > BODY_LIMIT && _read_method == READ_TO_MEM) {
+	// // 	throw InternalServerErrorException("Request body size exceeds server limit");
+	// 	start_save_to_file();
+	// 	// write the dechunked body parsed so far to file
+	// 	(this->*_read[_read_method])(_body.c_str(), _body.size());
+	// 	_body.clear();
+	// }
 	while (true) {
 		size_t chunk_start = _pos;
-		size_t n = _buffer.find("\r\n", _pos);
-		if (n == std::string::npos) {			// if i can't find the next line SEP, return and wait for more data to arrive
+		std::string sep("\r\n", 2);
+		std::string sep2("\r\n\r\n", 4);
+		size_t n = _buffer.find(sep, _pos);
+		if (n == std::string::npos) {
+			// if (_pos > _buffer.size())
+			// 	throw BadRequestException("Invalid chunked body format 1");
 			if (_pos != 0) { 					// if i have already parsed some chunk, but the next chunk size line is not complete, keep the unprocessed part in the buffer for the next parsing round
 				_buffer = _buffer.substr(_pos);	// keep the unprocessed part of the buffer starting from the current position, which may contain a partial chunk size line or chunk data that has not been fully parsed yet. This allows the parser to continue processing the remaining data when more bytes arrive in subsequent reads.
 				_pos = 0;						// reset the position to the beginning of the new buffer
 			}
+			if (DEBUG) std::cout << BOLD_YELLOW << "return n\n" << RESET;
 			return (false);
 		}
+		// if (_pos > _buffer.size())
+		// 	throw BadRequestException("Invalid chunked body format 2");
 		std::string hex = _buffer.substr(_pos, n - _pos); // find the next chunk size line, which is terminated by "\r\n". The chunk size is represented as a hexadecimal string, so we extract the substring from the current position to the position of the next "\r\n" to get the chunk size in hex format.
-		if (hex.find_first_not_of("0123456789aAbBcCdDeEfF") != std::string::npos)
-			throw BadRequestException("Invalid chunk size: [" + hex + "]");
 		_pos += 2 + hex.size();
 		unsigned int chunk_size = std::strtol(hex.c_str(), NULL, 16);
-		if (chunk_size == 0 && _buffer.find("\r\n\r\n", _pos) == std::string::npos) { // if the chunk size is 0, it indicates the last chunk, but we should also make sure that the final "\r\n\r\n" after the last chunk is received to mark the end of the chunked body. If we haven't received the final "\r\n\r\n" yet, we should wait for more data to arrive instead of marking the request as finished.
+		if (DEBUG) std::cout << "hex=[" << hex << "] chunk_size=" << chunk_size 
+          << " buffer_remaining=" << (_buffer.size() - _pos) << std::endl;
+		if (chunk_size == 0) {
+			if (_buffer.find(sep, _pos) == std::string::npos) {
+				// Final \r\n not received yet, wait
+				_buffer = _buffer.substr(chunk_start);
+				_pos = 0;
+				if (DEBUG) std::cout << BOLD_YELLOW << "return chunk_size == 0\n" << RESET;
+				return (false);
+			}
 			_state = FINISHED;
+			_headers->setHeader("content-length", ft_itoa(_body_size)); // use _body_size, not _buffer.size()
 			break;
 		}
-		if (_buffer.size() - _pos >= (size_t)chunk_size) {
+		if (_buffer.size() - _pos >= (size_t)chunk_size) { // if the buffer contains enough data for the whole chunk, including the trailing "\r\n" after the chunk data, we can parse the chunk immediately. Otherwise, we need to wait for more data to arrive before we can parse this chunk, since we don't have the complete chunk data yet.
+			size_t after_data = _pos + chunk_size;
+			if (after_data + 2 > _buffer.size()) {
+				// Trailing \r\n not received yet — roll back to chunk start
+				if (DEBUG) std::cout << BOLD_RED << "[REQUEST]" << RESET << " Chunk data received but trailing CRLF not complete, waiting for more data" << std::endl;
+				_buffer = _buffer.substr(chunk_start);
+				_pos = 0;
+				if (DEBUG) std::cout << BOLD_YELLOW << "return _buffer.substr(chunk_start)\n" << RESET;
+				return (false);
+			}
 			std::string chunk = _buffer.substr(_pos, chunk_size);
+			if (DEBUG) std::cout << BOLD_GREEN << "RECV: " << RESET << "Chunk N=" << chunk_size << " bytes, chunk size: [" << chunk.size() << "]" << std::endl;
 			(this->*_read[_read_method])(chunk.c_str(), chunk.size());
 			_pos += chunk_size + 2;
 		}
 		else {
 			_buffer = _buffer.substr(chunk_start);
 			_pos = 0;
+			if (DEBUG) std::cout << BOLD_YELLOW << "return buffer.substr(chunk_start)\n" << RESET;
 			return (false);
 		}
-		if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
+		if (DEBUG) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " body size: " << _body_size << std::endl;
+		// if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
+
 	}
+
+	if (DEBUG) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << "return last" << std::endl;
 	return (true);
 }
 

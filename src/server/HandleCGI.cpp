@@ -123,24 +123,28 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 				cgi_state->res_r_fd = -1;
 			}
 			cgi_state->ready_to_send = true;
-			// CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
-			// Response res(*this);
-			// res.handleCGIres(cgi_response);
-			// client->response = res.build();
-			// client->ready_to_send = true;
+			CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
+			Response res(*this);
+			res.handleCGIres(cgi_response);
+			client->response = res.build();
+			client->ready_to_send = true;
 
-			// struct epoll_event event;
-			// EpollData *data = new EpollData(client->fd, CLIENT, client);
-			// event.data.ptr = data;
-			// event.events = EPOLLOUT;
-			// epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
-			// delete cgi_state;
-			// client->cgi_state = NULL;
+			struct epoll_event event;
+			EpollData *data = new EpollData();
+			data->client = client;
+			data->fd = client->fd;
+			data->type = CLIENT;
+			event.data.ptr = data;
+			event.events = EPOLLOUT;
+			epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
+			delete cgi_state;
+			client->cgi_state = NULL;
 		}
 		else
 		{
-			if (DEBUG) std::cout << GREEN << "Read " << bytes_read << " bytes from CGI output for client fd " << client->fd << "." << RESET << std::endl; // Debug print of bytes read from CGI output
+			if (DEBUG) std::cout << GREEN << "Read: " << bytes_read << " bytes from CGI output for client fd: " << client->fd << "." << RESET << std::endl; // Debug print of bytes read from CGI output
 			buffer[bytes_read] = '\0';
+			std::cout << GREEN << "CGI output chunk for client fd " << client->fd << ":\n===>" << buffer << RESET << std::endl; // Debug print of CGI output chunk
 			cgi_state->cgi_output.append(buffer);
 		}
 	}
@@ -216,6 +220,7 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		
 		// Build response from CGI output
 		cgi_state->ready_to_send = true;
+		std::cout << GREEN << "Final CGI output for client fd " << client->fd << ":\n" << cgi_state->cgi_output << RESET << std::endl; // Debug print of final CGI output
 		CgiResponse_t cgi_response = parse_cgi_response(cgi_state->cgi_output);
 		Response res(*this);
 		res.handleCGIres(cgi_response);
@@ -224,6 +229,9 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 
 		struct epoll_event event;
 		EpollData *data = new EpollData();
+		data->client = client;
+		data->fd = client->fd;
+		data->type = CLIENT;
 		event.data.ptr = data;
 		event.events = EPOLLOUT;
 		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);

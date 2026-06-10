@@ -25,6 +25,7 @@ public:
     ~Header( void );
 
     std::string& getHeader( const std::string &key );
+    void setHeader( const std::string &key, const std::string &value );
     std::string& getCookie( const std::string &key );
     bool hasHeader( const std::string &key ) const;
     bool hasCookie( const std::string &key ) const;

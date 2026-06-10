@@ -34,8 +34,10 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
 
     if (!location->cgi.empty())
     {
+        std::cout << "Checking CGI for extension: " << extension << "file: " << file_path << std::endl;
         if (fileExists(file_path) && isExecutable(file_path))
         {
+            std::cout << "Matched CGI for extension: " << extension << ", executing CGI script: " << file_path << std::endl;
             // execute cgi with post data
             route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
