@@ -13,7 +13,11 @@ void Server::acceptClient(int listen_fd)
 
     struct epoll_event event;
     event.events = EPOLLIN;
-    EpollData* data = new EpollData(client_fd, CLIENT, clients[client_fd]);
+    EpollData* data = new EpollData;
+    data->fd = client_fd;
+    data->type = CLIENT;
+    data->client = clients[client_fd];
+    epoll_data[client_fd] = data;
     event.data.ptr = data;
 
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) 
@@ -21,6 +25,7 @@ void Server::acceptClient(int listen_fd)
         std::cerr << "Failed to add client to epoll" << std::endl;
         close(client_fd); 
         delete data;
+        epoll_data.erase(client_fd);
         throw std::runtime_error("epoll_ctl client add failed");
     }
    

@@ -5,7 +5,7 @@ volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a sh
 Server::Server(Config &config)
 {
 	this->config = config;
-	router = new Router(&config);
+	router = new Router(&this->config);
 	epoll_fd = -1;
 }
 
@@ -49,7 +49,11 @@ void Server::initEpoll()
 
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		EpollData *data = new EpollData(listen_fds[i], SERVER, NULL);
+		EpollData *data = new EpollData();
+		data->fd = listen_fds[i];
+		data->type = SERVER;
+		data->client = NULL;
+		epoll_data[listen_fds[i]] = data;
 		event.data.ptr = data;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1)
 			throw std::runtime_error("epoll_ctl ADD failed");
@@ -175,6 +179,11 @@ void Server::closeClient(int fd)
 	{
 		delete clients[fd];
 		clients.erase(fd);
+	}
+	if (epoll_data.find(fd) != epoll_data.end())
+	{
+		delete epoll_data[fd];
+		epoll_data.erase(fd);
 	}
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);

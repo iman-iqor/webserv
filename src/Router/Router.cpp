@@ -37,9 +37,11 @@ std::string Router::resolveErrorPage(int error_code, ServerBlock *server_block)
 
 RouteInfo Router::route(const Request &request, ServerBlock *server_block)
 {
+
     this->server_block = server_block;
     RouteInfo route_info;
     route_info.location = NULL;
+    route_info.isHead=false;
     route_info.headers.clear();
 
     route_info.location = findMatchingLocation(request.get_path());
@@ -88,7 +90,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
 
     std::string method = request.get_method();
 
-    if (method == "GET")
+    if (method == "GET" || method == "HEAD")
         return routeGET(request, route_info.location);
     else if (method == "POST")
         return routePOST(request, route_info.location);

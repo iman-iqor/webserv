@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            font-family: "Segoe UI", sans-serif;
+            overflow: hidden;
+        }
+
+        .card {
+            text-align: center;
+            padding: 50px;
+            max-width: 700px;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .status {
+            color: #22c55e;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        .laugh {
+            margin-top: 30px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .blink {
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🚀 Webserv</h1>
+        <div class="status">● Server Online</div>
+
+        <p>Your HTTP server is running successfully.</p>
+        <p>All systems are operational.</p>
+        <p>No need to panic.</p>
+        <p>Take a breath. ☕</p>
+        <p>Relax. Everything is under control.</p>
+
+        <div class="laugh">
+            Meanwhile, Webserv is busy printing money...
+            <span class="blink">HA HA HA 💰💰💰</span>
+        </div>
+
+        <div class="footer">
+            Powered by caffeine, bugs, and questionable decisions.
+        </div>
+    </div>
+</body>
+</html>

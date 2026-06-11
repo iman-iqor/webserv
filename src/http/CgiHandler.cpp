@@ -180,10 +180,10 @@ CgiState_t *CgiHandler::start(
 	// Add fdo[0] to epoll for monitoring CGI output
 	struct epoll_event event;
 	event.events = EPOLLIN;
-	EpollData* data = new EpollData(cgi_state->fdo[0], CGI_PIPE, client);
-	// data->client = client;
-	// data->fd = cgi_state->fdo[0];
-	// data->type = CGI_PIPE;
+	EpollData* data = new EpollData();
+	data->client = client;
+	data->fd = cgi_state->fdo[0];
+	data->type = CGI_PIPE;
 	event.data.ptr = data;
 	data->client->cgi_state = cgi_state; // Store CGI state in EpollData for access in event handler
 
