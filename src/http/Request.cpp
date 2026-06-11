@@ -225,17 +225,17 @@ RequestState Request::get_state(void) const
 
 bool Request::extract_plain_body(void)
 {
-	read_to_file(_buffer.c_str(), _buffer.size());
-	ssize_t bytes_read = (this->*_read[_read_method])(_buffer.c_str(), _buffer.size());
-	_buffer.erase(0, bytes_read);
+    size_t bytes_to_read = _content_length - _body_size;
+    size_t available = std::min(_buffer.size(), bytes_to_read);
+	read_to_file(_buffer.c_str(), available);
+	_buffer.clear();
 	if (_body_size < _content_length)
 		return (false);
 	_state = FINISHED;
-	if (DEBUG)
+	if (DEBUG) {
 		std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Plain body parsed, bytes=" << _body.size() << std::endl;
-	_pos = 0;
-	_buffer.clear();
 		std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Plain body parsed, total bytes=" << _body_size << std::endl;
+	}
 	if (_body_size != _content_length)
 		throw BadRequestException("Body size does not match Content-Length");
 	return (true);
