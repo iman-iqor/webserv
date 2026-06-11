@@ -96,7 +96,7 @@ void Response::handleResponse(const RouteInfo& info, const std::map<int, std::st
 
 void Response::serveFile(const std::string& file_path, const std::map<int, std::string> error_pages,RouteInfo info)
 {
-    std::cout << "Serving file: " << file_path << std::endl;
+   
     std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
     if(!file.is_open())
     {

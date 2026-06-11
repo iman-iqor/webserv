@@ -6,10 +6,8 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     if(request.get_method()=="HEAD")
         route_info.isHead=true;
     std::string file_path = resolveFilePath(request.get_path(), location);
-    std::cout << "resolved file path: " << file_path << std::endl;
-    if (!fileExists(file_path))
+    if (!fileExists(file_path)&& !isDirectory(file_path))
     {
-        std::cout << "File does not exist: " << file_path << std::endl;
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
         std::string error_page=resolveErrorPage(404,server_block);
@@ -64,7 +62,7 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     std::string extension = getFileExtension(file_path);
     if (!location->cgi.empty())
     {
-        std::cout << "\033[31mfound CGI handler for extension " << extension << "\033[31m" << std::endl;
+       
         if (isExecutable(file_path))
         {
             route_info.file_extension = extension;
@@ -75,7 +73,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
             return route_info;
         }
     }
-    std::cout << "\033[31mserving file\033[31m" << std::endl;
     route_info.action = SERVE_FILE;
     route_info.file_path = file_path;
     route_info.http_status = 200;

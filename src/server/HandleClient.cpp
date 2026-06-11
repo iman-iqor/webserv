@@ -112,8 +112,6 @@ void Server::processRequest(int client_fd)
     }
 
     RouteInfo route = router->route(client->request, server_block);
-    std::cout<<"Route action: "<<route.action<<" for client "<<client_fd<<std::endl;
-    std::cout<<"Route file path: "<<route.file_path<<" for client "<<client_fd<<std::endl;  
 
     if (route.action == EXECUTE_CGI) {
         std::string bin_path = route.location->cgi[route.file_extension.substr(1)]; // remove the dot from extension
