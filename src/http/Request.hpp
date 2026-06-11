@@ -7,20 +7,23 @@
 #include "Exceptions.hpp"
 #include "../config/Config.hpp"
 
-#define BODY_LIMIT 8192 // 8KB
+#define BODY_LIMIT 8192 
 
 enum RequestState {
-	READ_START_LINE,	// Parse first line: "METHOD SP TARGET SP HTTP/VERSION\r\n"
-	READ_HEADERS,		// Parse headers until empty line: "\r\n\r\n"
-	READ_PLAIN_BODY,	// Read body bytes based on Content-Length
-	READ_CHUNK_BODY,	// Read chunked body until the final zero-size chunk is parsed
-	FINISHED			// Request fully parsed and ready for routing/handling
+	READ_START_LINE,	
+	READ_HEADERS,	
+	READ_BODY,	
+	READ_CHUNK_DATA,
+	READ_CHUNK_SIZE,	
+	FINISHED,
+	ERROR			
 };
 
 enum RequestMethod {
     GET,
     POST,
-    DELETE
+    DELETE,
+	UNKNOWN
 };
 
 enum ReadMethod {
@@ -28,55 +31,61 @@ enum ReadMethod {
 	READ_TO_FIL
 };
 
-class Request {
-    std::string _method;
-	std::string _path;
-    std::string _http_version;
-    std::string _body;
-	std::string _raw_bytes;
-	std::string filename;//file name for body
-    std::string _buffer;
-	std::fstream _outfile;
-	size_t _body_size;
-    size_t _pos;
-	size_t _content_length;
-	size_t _read_bytes;
-	Header *_headers;
-	//imane added this for cgi 06/06/2024
-	std::string _query_string;
-	RequestState _state;
-	Location *_location;
-	ReadMethod _read_method;
-	bool _body_is_set;
-	
-    ssize_t (Request::*_read[2])( const char *buffer, ssize_t size );
-    bool (Request::*_parse[4])( void );
+class Request
+{
+	private:
+		RequestState state;
 
-public:
-	Request( void );
-	~Request( void );
-    void _parser( void );
+		std::string buffer;
+		size_t content_length;
+		size_t body_size;
+		size_t chunk_size;
 
-	ssize_t read_to_mem( const char *buffer, ssize_t size );
-	ssize_t read_to_file( const char *buffer, ssize_t size );
-	void append_request( const char *s, ssize_t size );
-	bool extract_first_line( void );
-	bool extract_headers( void );
-	bool extract_plain_body( void );
-	bool extract_chunked_body( void );
-	size_t get_content_length( void ) const;
-    bool is_finished( void );
-	const std::string& get_path( void ) const;
-	const std::string& get_method( void ) const;
-	const std::string& getHeader(const std::string &name) const;
-	std::string& get_body(void);
-	const std::string& get_http_version(void) const;
-	RequestState get_state( void ) const ;
-	std::map<std::string, std::string> &getHeaders();
-	// add a method to start the save in file process, create a file and save fd
-	void start_save_to_file( void );
-	//imane added this
-	const std::string& get_query_string( void ) const;
+
+		RequestMethod 	method;
+		std::string method_str;
+		std::string path;
+		std::string http_version;
+		std::string query_string;
+
+		std::string body_file_path;
+		std::ofstream body_file;
+
+		int error_code;
+
+		Header headers;
+		void parse_start_line();
+		void parse_headers();
+		void parse_plain_body();
+		void parse_chunked_body();
+		std::string trim(const std::string& str);
+    	void setup_body_file();
+
+	public:
+		Request();
+		Request(const Request& other);
+    	Request& operator=(const Request& other);
+		~Request();
+		void append_to_buffer(const char *data, ssize_t size);
+		RequestState get_state() const;
+
+    	bool is_finished() const;
+		RequestMethod get_method() const;
+
+		const std::string& get_method_str() const;
+		const std::string& get_body();
+		const std::string& get_query_string() const;
+		const std::string& get_http_version() const;
+		const std::string& get_body_file_path() const;
+		size_t get_body_size() const;
+		size_t get_content_length( void ) const;
+		const std::string& get_path( void ) const;
+		const std::string& getHeader(const std::string &name) const;
+		int	get_error_code() const;
+		
+		void parser(); 
+		const std::string& get_header(const std::string &name) const;
+		const std::map<std::string, std::string> &getHeaders();
 };
 
-#endif // REQUEST_HPP
+#endif

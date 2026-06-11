@@ -21,15 +21,16 @@ private:
     void _cookie_pair_parser( const std::string &s, char del);
 
 public:
-    Header( std::string &s );
+    Header();
+    Header(const std::string &s );
     ~Header( void );
 
-    std::string& getHeader( const std::string &key );
-    std::string& getCookie( const std::string &key );
+    const std::string& getHeader( const std::string &key ) const;
+    const std::string& getCookie( const std::string &key );
     bool hasHeader( const std::string &key ) const;
     bool hasCookie( const std::string &key ) const;
     std::map<std::string, std::string> &getHeaders();
-
+    const std::map<std::string, std::string>& getHeadersMap() const;
 	class HeaderNotFound: public std::exception {
 		virtual const char *what( void ) const throw();
 	};
@@ -39,4 +40,4 @@ public:
 	};
 };
 
-#endif // HEADER_HPP
+#endif

@@ -4,10 +4,6 @@
 # define VERBOS false
 #endif
 
-/**
- * name = token
- * token = 1*<any CHAR except CTLs or separators>
- */
 bool is_valid_key(const std::string& s)
 {
     std::string allowed = "!#$%&'*+-.^_`|~";
@@ -29,7 +25,9 @@ bool is_valid_cookie_value(const std::string& s)
     return true;
 }
 
-Header::Header( std::string &headers )
+Header::Header() {}
+
+Header::Header(const  std::string &headers )
 {
     if (VERBOS) std::cout << BOLD_MAGENTA << "[HEADER]" << RESET << " Constructing header parser" << std::endl;
     _parser(headers);
@@ -39,15 +37,6 @@ Header::Header( std::string &headers )
 Header::~Header( void )
 {
     if (VERBOS) std::cout << BOLD_MAGENTA << "[HEADER]" << RESET << " Destroying header parser" << std::endl;
-}
-
-std::string &Header::getHeader( const std::string &key )
-{
-    std::string lower_key = key;
-    to_lower(lower_key);
-    if (_headers.find(lower_key) == _headers.end())
-        throw BadRequestException("Header not found: " + key);
-    return _headers[lower_key];
 }
 
 bool Header::hasHeader( const std::string &key ) const
@@ -62,13 +51,29 @@ bool Header::hasCookie( const std::string &key ) const
     return _cookies.find(key) != _cookies.end();
 }
 
-std::string &Header::getCookie( const std::string &key )
+const std::string &Header::getHeader( const std::string &key ) const
 {
-    if (_cookies.find(key) == _cookies.end())
-        throw CookieNotFound();
-    return _cookies[key];
+    std::string lower_key = key;
+    to_lower(lower_key);
+    std::map<std::string, std::string>::const_iterator it = _headers.find(lower_key);
+    if (it == _headers.end())
+        throw BadRequestException("Header not found: " + key);
+        
+    return it->second;
 }
 
+const std::string &Header::getCookie( const std::string &key )
+{
+    std::map<std::string, std::string>::const_iterator it = _cookies.find(key);
+    if (it == _cookies.end())
+    throw CookieNotFound();
+    
+    return it->second;
+}
+
+const std::map<std::string, std::string>& Header::getHeadersMap() const {
+    return _headers;
+}
 void Header::_parser( const std::string &s )
 {
     std::string str = s.substr(0, s.find("\r\n\r\n"));

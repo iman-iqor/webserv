@@ -20,7 +20,6 @@ public:
 	}
 };
 
-/* 4xx */
 
 class BadRequestException : public HttpException
 {
@@ -64,14 +63,7 @@ public:
 	    : HttpException(413, msg, "Payload Too Large") {}
 };
 
-class UnsupportedMediaTypeException : public HttpException
-{
-public:
-	UnsupportedMediaTypeException(const std::string &msg = "Unsupported Media Type")
-	    : HttpException(415, msg, "Unsupported Media Type") {}
-};
 
-/* 5xx */
 
 class InternalServerErrorException : public HttpException
 {
@@ -87,30 +79,5 @@ public:
 	    : HttpException(501, msg, "Not Implemented") {}
 };
 
-class BadGatewayException : public HttpException
-{
-public:
-	BadGatewayException(const std::string &msg = "Bad Gateway")
-	    : HttpException(502, msg, "Bad Gateway") {}
-};
 
-// CGI-specific exceptions
-
-// class CgiException : public std::exception
-// {
-// public:
-// 	int statusCode;
-// 	std::string message;
-// 	std::string statusMessage;
-
-// 	CgiException(int code, const std::string &msg, const std::string &statusMsg)
-// 	    : statusCode(code), message(msg), statusMessage(statusMsg) {}
-// 	~CgiException() throw() {}
-
-// 	const char *what() const throw()
-// 	{
-// 		return message.c_str();
-// 	}
-// };
-
-#endif // EXCEPTIONS_HPP
+#endif
