@@ -95,7 +95,9 @@ std::string Server::intToString(size_t n)
 
 void Server::processRequest(int client_fd)
 {
+    std::cout << "Processing request for client " << client_fd << std::endl;
     Client *client = clients[client_fd];
+    client->request.close_outfile();
 
     ServerBlock *server_block = NULL;
     if (fd_to_servers.find(client->listen_fd) != fd_to_servers.end())

@@ -23,9 +23,7 @@ class Client; // Forward declaration to avoid circular includes
  */
 typedef struct CgiState_s {
 	int fdo[2];	// pipe for CGI output (child writes to fdo[1], parent reads from fdo[0])
-	int fdi[2];	// pipe for CGI input (parent writes to fdi[
 	pid_t pid;		// process ID of the CGI child
-	int req_w_fd;	// fd to write request body to CGI child's stdin
 	int res_r_fd;	// fd to read CGI child's stdout for response
 	std::string cgi_output; // buffer to hold CGI output until child exits (non-blocking)
 	size_t body_sent; // track how many bytes of the request body have been sent to the CGI child

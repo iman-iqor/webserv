@@ -145,32 +145,32 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		}
 	}
 	
-	if (events & EPOLLOUT)
-	{
-		if (DEBUG) std::cout << GREEN << "Writable event on CGI request pipe for client fd " << client->fd << ". Writing request body..." << RESET << std::endl; // Debug print of writable event handling
-		// Write request body to CGI input
-		if (cgi_state->req_w_fd != -1 && cgi_state->body_sent < client->request.get_content_length())
-		{
-			const std::string& body = client->request.get_body();
-			ssize_t bytes_to_send = client->request.get_content_length() - cgi_state->body_sent;
-			ssize_t bytes_written = write(cgi_state->req_w_fd, body.c_str() + cgi_state->body_sent, bytes_to_send);
-			if (bytes_written < 0) {
-				throw InternalServerErrorException("Failed to write to CGI input pipe");
-			}
-			if (bytes_written > 0)
-			{
-				cgi_state->body_sent += bytes_written;
-			}
+	// if (events & EPOLLOUT)
+	// {
+	// 	if (DEBUG) std::cout << GREEN << "Writable event on CGI request pipe for client fd " << client->fd << ". Writing request body..." << RESET << std::endl; // Debug print of writable event handling
+	// 	// Write request body to CGI input
+	// 	if (cgi_state->req_w_fd != -1 && cgi_state->body_sent < client->request.get_content_length())
+	// 	{
+	// 		const std::string& body = client->request.get_body();
+	// 		ssize_t bytes_to_send = client->request.get_content_length() - cgi_state->body_sent;
+	// 		ssize_t bytes_written = write(cgi_state->req_w_fd, body.c_str() + cgi_state->body_sent, bytes_to_send);
+	// 		if (bytes_written < 0) {
+	// 			throw InternalServerErrorException("Failed to write to CGI input pipe");
+	// 		}
+	// 		if (bytes_written > 0)
+	// 		{
+	// 			cgi_state->body_sent += bytes_written;
+	// 		}
 			
-			// Check if all body has been sent
-			if (cgi_state->body_sent >= client->request.get_content_length())
-			{
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->req_w_fd, NULL);
-				close(cgi_state->req_w_fd);
-				cgi_state->req_w_fd = -1;
-			}
-		}
-	}
+	// 		// Check if all body has been sent
+	// 		if (cgi_state->body_sent >= client->request.get_content_length())
+	// 		{
+	// 			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->req_w_fd, NULL);
+	// 			close(cgi_state->req_w_fd);
+	// 			cgi_state->req_w_fd = -1;
+	// 		}
+	// 	}
+	// }
 	
 	if (events & EPOLLHUP)
 	{
@@ -182,12 +182,6 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 			close(cgi_state->res_r_fd);
 			cgi_state->res_r_fd = -1;
 		}
-		if (cgi_state->req_w_fd != -1)
-		{
-			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, cgi_state->req_w_fd, NULL);
-			close(cgi_state->req_w_fd);
-			cgi_state->req_w_fd = -1;
-		}
 		
 		// Wait for CGI child process to finish (non-blocking)
 		int status;
@@ -196,7 +190,7 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		if (result == 0) {
 			kill(cgi_state->pid, SIGKILL);
 			waitpid(cgi_state->pid, &status, 0);
-			std::cerr << RED << "Warning: CGI child process was still running and has been killed." << RESET << std::endl; // Debug print of CGI child still running warning
+			std::cerr << YELLOW << "Warning: CGI child process was still running and has been killed." << RESET << std::endl; // Debug print of CGI child still running warning
 		} else if (result == -1) {
 			// Error (e.g. child already reaped, or invalid pid)
 			perror("waitpid");

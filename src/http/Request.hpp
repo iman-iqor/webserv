@@ -34,7 +34,6 @@ class Request {
     std::string _http_version;
     std::string _body;
 	std::string _raw_bytes;
-	std::string filename;
     std::string _buffer;
 	std::fstream _outfile;
 	size_t _body_size;
@@ -49,8 +48,9 @@ class Request {
 	
     ssize_t (Request::*_read[2])( const char *buffer, ssize_t size );
     bool (Request::*_parse[4])( void );
-
+	
 public:
+	std::string filename;
 	Request( void );
 	~Request( void );
     void _parser( void );
@@ -73,6 +73,7 @@ public:
 	std::map<std::string, std::string> &getHeaders();
 	// add a method to start the save in file process, create a file and save fd
 	void start_save_to_file( void );
+	void close_outfile( void );
 };
 
 #endif // REQUEST_HPP

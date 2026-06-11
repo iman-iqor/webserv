@@ -1,0 +1,14 @@
+Listening on 0.0.0.0:8080
+Listening on 127.0.0.1:8081
+Listening on 127.0.0.1:9090
+New client connected: 7
+Processing request for client 7
+found a match with location path: /
+found a match with location path: /cgi-bin
+Route action: 3 for client 7
+Route file path:  for client 7
+[32mStarting CGI execution for client: 7[00m
+  CGI path: src/www/cgi-bin//test_post.py
+  Binary path: /usr/bin/python3
+Client disconnected: 7
+Server shut down cleanly
