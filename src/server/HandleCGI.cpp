@@ -39,81 +39,51 @@ void Server::setupCGIEnv(Request &req,RouteInfo &route)
 
 
 
-
-// This function will fork a child process to execute the CGI script
-// and set up pipes for communication between the server and the CGI process.
-// The implementation details are complex and involve setting up environment variables,
-// handling input/output redirection, and managing the CGI process lifecycle.
-void Server::launchCGI(Client *client, RouteInfo route)
+void Server::launchCGI(int client_fd, RouteInfo &route, Client *client)
 {
-	const std::string &body = client->request.get_body();
-    bool has_body = 0;
-    if(client->request.get_method() == "POST" && !body.empty())
-        has_body = 1;       
-
     int stdout_pipe[2];
-    int stdin_pipe[2]={-1,-1};
 
-    if(pipe(stdout_pipe) == -1)
-    {
-        throw InternalServerErrorException("Failed to create stdout pipe");
-    }
-
-    if(has_body && pipe(stdin_pipe) == -1)
-    {
-        close(stdout_pipe[0]);
-        close(stdout_pipe[1]);
-        throw InternalServerErrorException("Failed to create stdin pipe");
-    }
+    if (pipe(stdout_pipe) == -1)
+        throw HttpException(500, "Internal Server Error", "pipe() failed");
 
     pid_t pid = fork();
-    if(pid == -1)
+    if (pid == -1)
     {
         close(stdout_pipe[0]);
         close(stdout_pipe[1]);
-        if(has_body)
-        {
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
-        }
-        throw InternalServerErrorException("Fork failed");
+        throw HttpException(500, "Internal Server Error", "fork() failed");
     }
 
-    if(pid == 0)
+    if (pid == 0)
     {
         close(stdout_pipe[0]);
-        if(dup2(stdout_pipe[1],STDOUT_FILENO == -1))
-            _exit(1);
+        if (dup2(stdout_pipe[1], STDOUT_FILENO) == -1) _exit(1);
         close(stdout_pipe[1]);
 
-        if(has_body)
+        if (client->request.get_method() == "POST"
+            && client->request.get_body_size() > 0)
         {
-            close(stdin_pipe[1]);
-            if(dup2(stdin_pipe[0],STDIN_FILENO) == -1)
-                _exit(1);
-            close(stdin_pipe[0]);
+            int body_fd = open(client->request.get_filename().c_str(), O_RDONLY);
+            if (body_fd == -1) _exit(1);
+            if (dup2(body_fd, STDIN_FILENO) == -1) _exit(1);
+            close(body_fd);
         }
-        //close all other open fds  the child inherited(epoll_fd,client_fds...)
-        //simple approach :clos all fds above stderr
-        for(int fd = 3; fd < 1024; ++fd)
-            close(fd);
-        
-        setupCGIEnv(client->request,route);
 
-        char* argv[] =
-        {
+        // close all inherited fds
+        for (int fd = 3; fd < 1024; fd++)
+            close(fd);
+
+        setupCGIEnv(client->request, route);
+
+        char *argv[] = {
             const_cast<char *>(route.cgi_path.c_str()),
             const_cast<char *>(route.cgi_string.c_str()),
             NULL
         };
-        execve(route.cgi_path.c_str(),argv,environ);
-        // If execve returns, it means it failed
+        execve(route.cgi_path.c_str(), argv, environ);
         _exit(1);
     }
-    close(stdout_pipe[1]);
 
-    if(has_body)
-    {
-        
-    }
+    close(stdout_pipe[1]);
+    fcntl(stdout_pipe[0], F_SETFL, O_NONBLOCK);
 }

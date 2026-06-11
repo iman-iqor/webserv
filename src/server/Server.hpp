@@ -15,17 +15,16 @@
 #include <exception>
 #include <algorithm>
 #include <signal.h>
+#include <set>
+#include <cstring> 
 #include "../http/Request.hpp"
 #include "../http/Response.hpp"
-
 #include "../Router/Router.hpp"
-#include <set>
-#include <cstring> // for memset
+#include "../config/Config.hpp"
+#include "Client.hpp"
 
 extern volatile sig_atomic_t g_shutdown;
 
-#include "../config/Config.hpp"
-#include "Client.hpp"
 
 enum FDType
 {
@@ -52,10 +51,8 @@ class Server
 {
 private:
     Config config;
-
     std::vector<int> listen_fds;
     int epoll_fd;
-
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock *> > fd_to_servers;
     std::map<int, EpollData *> epoll_data;
@@ -75,13 +72,16 @@ public:
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
+    void handleClientError(Client *client, const HttpException &e);
+
+
+    //route
     RouteInfo FileUploadRoute(const RouteInfo &route, Request &request);
     RouteInfo DeleteFile(const RouteInfo &route);
-    void handleClientError(Client *client, const HttpException &e);
 
     //CGI
     void handleCGI(EpollData *data, uint32_t events);
-    void launchCGI(Client *client, RouteInfo);
+    void launchCGI(int client_fd, RouteInfo &route, Client *client);
     void setupCGIEnv(Request &req,RouteInfo &route);
     
     void closeClient(int fd);
