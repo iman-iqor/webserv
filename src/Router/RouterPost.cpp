@@ -7,6 +7,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     route_info.http_status = 200;
     route_info.status_message = "OK";
 
+
     // validate content_length
     std::string content_length_str = request.getHeader("Content-Length");
     if (!content_length_str.empty())
@@ -14,9 +15,15 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
         size_t content_length = static_cast<size_t>(atoi(content_length_str.c_str()));
         if (server_block && static_cast<long>(content_length) > server_block->client_max_body_size)
         {
-            route_info.action = ERROR_413;
             route_info.http_status = 413;
             route_info.status_message = "Payload Too Large";
+            std::string error_page=resolveErrorPage(413,server_block);
+            if (!error_page.empty())            {
+                route_info.action = SERVE_FILE;
+                route_info.file_path = error_page;
+            }
+            else
+                route_info.action = ERROR_413;
             return route_info;
         }
     }
@@ -25,14 +32,13 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
 
     // check for CGI scripts cause post can trigger CGI a bro
     std::string extension = getFileExtension(file_path);
-    std::cout << "extension: " << extension << std::endl;
 
-    if (!location->cgi.empty() && location->cgi.count(extension) > 0)
+    if (!location->cgi.empty())
     {
-        std::cout << "inside cgi" << std::endl;
         if (fileExists(file_path) && isExecutable(file_path))
         {
             // execute cgi with post data
+            route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.http_status = 200;
@@ -54,9 +60,16 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     }
 
     // post ot alloed
-    route_info.action = ERROR_405;
     route_info.http_status = 405;
     route_info.status_message = "Method Not Allowed";
+    std::string error_page=resolveErrorPage(405,server_block);
+    if (!error_page.empty())
+    {
+        route_info.action = SERVE_FILE;
+        route_info.file_path = error_page;
+    }
+    else
+        route_info.action = ERROR_405;
 
     return route_info;
 }
@@ -66,16 +79,21 @@ std::string Router::generateUploadFilename(const Request &request, Location *loc
     (void)location;
 
     // try to get filename from content-disposition
+    
 
     try
     {
         std::string disposition = request.getHeader("Content-Disposition");
         if (!disposition.empty())
         {
+            
+            std::cout<<"a"<<std::endl;
             size_t filename_pos = disposition.find("filename=\"");
 
             if (filename_pos != std::string::npos)
             {
+                std::cout<<"a"<<std::endl;
+
                 size_t start = filename_pos + 10;
                 size_t end = disposition.find("\"", start);
                 if (end != std::string::npos)

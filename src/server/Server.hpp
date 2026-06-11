@@ -58,6 +58,7 @@ private:
 
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock *> > fd_to_servers;
+    std::map<int, EpollData *> epoll_data;
     Router *router;
 
 public:
@@ -74,17 +75,16 @@ public:
     void handleRead(Client *client);
     void handleWrite(Client *client);
     void processRequest(int client_fd);
-    void handleFileUpload(int client_fd, const RouteInfo &route, const Request &request);
-    void handleDeleteFile(int client_fd, const RouteInfo &route);
-    std::string buildErrorResponse(int code, const std::string &message);
-    
+    RouteInfo FileUploadRoute(const RouteInfo &route, Request &request);
+    RouteInfo DeleteFile(const RouteInfo &route);
+    void handleClientError(Client *client, const HttpException &e);
+
     //CGI
     void handleCGI(EpollData *data, uint32_t events);
     void launchCGI(Client *client, RouteInfo);
     void setupCGIEnv(Request &req,RouteInfo &route);
-
+    
     void closeClient(int fd);
-    void switchToWrite(int client_fd);
     std::string intToString(size_t n);
 };
 #endif

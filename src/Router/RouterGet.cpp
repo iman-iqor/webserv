@@ -3,15 +3,22 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
 {
     RouteInfo route_info;
     route_info.location = location;
-
+    if(request.get_method()=="HEAD")
+        route_info.isHead=true;
     std::string file_path = resolveFilePath(request.get_path(), location);
-    std::cout << "resolved file path: " << file_path << std::endl;
-    if (!fileExists(file_path))
+    if (!fileExists(file_path)&& !isDirectory(file_path))
     {
-
-        route_info.action = ERROR_404;
         route_info.http_status = 404;
         route_info.status_message = "Not Found";
+        std::string error_page=resolveErrorPage(404,server_block);
+        if (!error_page.empty())
+        {
+            std::cout<<"olala"<<std::endl;
+            route_info.action = SERVE_FILE;
+            route_info.file_path = error_page;
+        }
+        else
+            route_info.action = ERROR_404;
         return route_info;
     }
 
@@ -23,7 +30,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
         index_path += location->index;
         if (fileExists(index_path) && !isDirectory(index_path))
         {
-            std::cout << "\033[31mindex file found\033[31m" << std::endl;
             route_info.action = SERVE_FILE;
             route_info.file_path = index_path;
             route_info.http_status = 200;
@@ -33,7 +39,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
 
         if (location->autoindex == true)
         {
-            std::cout << "\033[31mautoindex enabled\033[31m" << std::endl;
             route_info.action = DIRECTORY_LISTING;
             route_info.file_path = file_path;
             route_info.http_status = 200;
@@ -41,17 +46,26 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
             return route_info;
         }
 
-        route_info.action = ERROR_403;
-        route_info.http_status = 403;
-        route_info.status_message = "Forbidden";
+        route_info.http_status = 404;
+        route_info.status_message = "Not Found";
+        std::string error_page=resolveErrorPage(404,server_block);
+        if (!error_page.empty())
+        {
+            route_info.action = SERVE_FILE;
+            route_info.file_path = error_page;
+        }
+        else
+            route_info.action = ERROR_403;
         return route_info;
     }
 
     std::string extension = getFileExtension(file_path);
-    if (!location->cgi.empty() && location->cgi.count(extension) > 0)
+    if (!location->cgi.empty())
     {
+       
         if (isExecutable(file_path))
         {
+            route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.cgi_path = location->cgi[extension];
@@ -60,7 +74,6 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
             return route_info;
         }
     }
-    std::cout << "\033[31mserving file\033[31m" << std::endl;
     route_info.action = SERVE_FILE;
     route_info.file_path = file_path;
     route_info.http_status = 200;

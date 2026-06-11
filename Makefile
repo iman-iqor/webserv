@@ -3,9 +3,9 @@ NAME = webserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-SRC = \
-	main.cpp \
-	src/config/Parser.cpp \
+MAIN = main.cpp
+
+SRC = src/config/Parser.cpp \
 	src/config/tokenizer.cpp\
 	src/config/ParseLocation.cpp\
 	src/config/ParseHelpers.cpp\
@@ -22,7 +22,6 @@ SRC = \
 	src/server/HandleClient.cpp \
 	src/server/handleFileUpload.cpp \
 	src/server/handleDeleteFile.cpp \
-	src/server/buildResponse.cpp \
 	src/server/HandleCGI.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
@@ -32,16 +31,31 @@ SRC = \
 
 OBJ_DIR = obj_file
 OBJ = $(addprefix $(OBJ_DIR)/,$(SRC:.cpp=.o))
+MAIN_OBJ = $(addprefix $(OBJ_DIR)/,$(MAIN:.cpp=.o))
 
 
 all: $(NAME)
 
-$(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+$(NAME): $(MAIN_OBJ) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(MAIN_OBJ) $(OBJ) -o $(NAME)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+###########################################
+###########################################
+
+TEST_CGI = test_cgi
+
+CGI_MAIN = src/http/tests/cgi_tests.cpp
+CGI_OBJ = $(addprefix $(OBJ_DIR)/,$(CGI_MAIN:.cpp=.o))
+
+$(TEST_CGI): $(CGI_OBJ) $(OBJ)
+	$(CXX) $(CXXFLAGS) $(CGI_OBJ) $(OBJ) -o $(TEST_CGI)
+
+###########################################
+###########################################
 
 run: all
 	clear
@@ -51,7 +65,7 @@ clean:
 	rm -rf $(OBJ_DIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(TEST_CGI)
 
 re: fclean all
 

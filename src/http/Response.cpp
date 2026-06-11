@@ -54,9 +54,9 @@ std::string Response::build()
     return ss.str();
 }
 
-// void Response::handleResponse(int client_fd, const RouteInfo& info, CgiResponse_t& cgi_output, const std::map<int, std::string> error_pages, Client &client)
+// void Response::handleResponse(int client_fd, const RouteInfo& info, CgiResponse_t* cgi_output, const std::map<int, std::string> error_pages, Client *client)
 
-void Response::handleResponse(int client_fd, const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client)
+void Response::handleResponse(const RouteInfo& info, const std::map<int, std::string> error_pages, Client *client)
 {
     this->setStatus(info.http_status,info.status_message);
 
@@ -66,7 +66,7 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
         this->setHeader(it->first, it->second);
     }
 
-    if(info.http_status >= 400)
+    if(info.http_status >= 400 and info.action != SERVE_FILE)
     {
         this->ErrorResponse(info.http_status, info.status_message, error_pages);
         return;
@@ -74,7 +74,7 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
     switch (info.action)
     {
         case SERVE_FILE:
-            this->serveFile(info.file_path, error_pages);
+            this->serveFile(info.file_path, error_pages, info);
             break;
         case REDIRECT:
             handleRedirect(info);
@@ -83,10 +83,10 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
             handleAutoIndex(info);
             break;
         case UPLOAD_FILE:
-            server.handleFileUpload(client_fd, info,client->request);
+            handleFileUpload(info, client->request, error_pages);
             break;
         case DELETE_FILE:
-            server.handleDeleteFile(client_fd, info);
+            handleFileDelete( info, error_pages);
             break;
         default:
             break;
@@ -94,8 +94,9 @@ void Response::handleResponse(int client_fd, const RouteInfo& info, const std::m
     
 }
 
-void Response::serveFile(const std::string& file_path, const std::map<int, std::string> error_pages)
+void Response::serveFile(const std::string& file_path, const std::map<int, std::string> error_pages,RouteInfo info)
 {
+   
     std::ifstream file(file_path.c_str(), std::ios::in | std::ios::binary);
     if(!file.is_open())
     {
@@ -106,9 +107,12 @@ void Response::serveFile(const std::string& file_path, const std::map<int, std::
     std::stringstream ss;
     ss << file.rdbuf();
     file.close();
-    this->setStatus(200, "OK");
+    this->setStatus(info.http_status, info.status_message);
     this->setHeader("Content-Type", MimeType(file_path));
-    this->setBody(ss.str());
+    if(info.isHead)
+        this->setBody("");
+    else
+        this->setBody(ss.str());
 }
 
 
@@ -221,4 +225,36 @@ void Response::handleCGIres(CgiResponse_t& cgi_output)
 
 }
 
+void Response::handleFileUpload(const RouteInfo &info, Request &req, const std::map<int, std::string > error_pages)
+{
+    RouteInfo upload_info = server.FileUploadRoute(info, req);
 
+    this->setStatus(upload_info.http_status,upload_info.status_message);
+
+    if (upload_info.http_status >= 400)
+    {
+        ErrorResponse(upload_info.http_status, upload_info.status_message, error_pages);
+    }
+    else
+    {
+        setHeader("Content-Type", "text/plain");
+        setBody("File uploaded successfully");
+    }
+}
+
+void Response::handleFileDelete(const RouteInfo &info, const std::map<int, std::string > error_pages)
+{
+    RouteInfo upload_info = server.DeleteFile(info);
+
+    this->setStatus(upload_info.http_status,upload_info.status_message);
+
+    if (upload_info.http_status >= 400)
+    {
+        ErrorResponse(upload_info.http_status, upload_info.status_message, error_pages);
+    }
+    else
+    {
+        setStatus(204, "No Content");
+        setBody("");
+    }
+}

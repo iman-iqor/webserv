@@ -3,34 +3,41 @@
 #include <cstdlib>
 #include <sys/socket.h>
 #include <algorithm>
+#include "../../webserv.h"
 
 #define BUFFER_SIZE 4096
 
-#ifndef VERBOS
-#define VERBOS false
+#ifndef DEBUG
+# define DEBUG false
 #endif
 
 Request::Request(void)
 {
+	_read_method = READ_TO_MEM;
 	_state = READ_START_LINE;
 	_method = "";
 	_path = "";
 	_headers = NULL;
 	_pos = 0;
+	_body_size = 0;
 	_content_length = 0;
 	_location = NULL;
 	_read_bytes = 0;
+	_body_is_set = false;
 	_parse[READ_START_LINE] = &Request::extract_first_line;
 	_parse[READ_HEADERS] = &Request::extract_headers;
 	_parse[READ_PLAIN_BODY] = &Request::extract_plain_body;
 	_parse[READ_CHUNK_BODY] = &Request::extract_chunked_body;
-	if (VERBOS)
-		std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Parser initialized" << std::endl;
+	_read[READ_TO_MEM] = &Request::read_to_mem;
+	_read[READ_TO_FIL] = &Request::read_to_file;
+	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Parser initialized" << std::endl;
 }
 
 Request::~Request(void)
 {
 	delete _headers;
+	if (_outfile.is_open())
+		_outfile.close();
 }
 
 bool Request::is_finished(void)
@@ -48,20 +55,40 @@ const std::string &Request::get_method(void) const
 	return _method;
 }
 
-void Request::append_to_buffer(const char *s)
+ssize_t Request::read_to_mem( const char *s, ssize_t size )
 {
-	_buffer += s;
-	if (VERBOS)
-		std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << _buffer.size() << std::endl;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into buffer" << std::endl;;
+	if (_body_size + static_cast<size_t>(size) > _content_length)
+		size = _content_length - _body_size;
+	_body.append(s, size);
+	_body_size += size;
+	return size;
+}
+
+ssize_t Request::read_to_file( const char *s, ssize_t size )
+{
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into file" << std::endl;
+	if (!_outfile.is_open())
+		throw InternalServerErrorException("Temporary file for request body is not open");
+	if (_body_size + static_cast<size_t>(size) > _content_length)
+		size = _content_length - _body_size;
+	_outfile.write(s, size);
+	_body_size += size;
+	return size;
+}
+
+void Request::append_request( const char *s, ssize_t size )
+{
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Received bytes, buffer size=" << size << std::endl;
+	_buffer.append(s, size);
 	_parser();
 }
 
 void Request::_parser(void)
 {
 	if (_state == FINISHED)
-		return;
-	if (VERBOS)
-		std::cout << CYAN << "[REQUEST]" << RESET << " Parsing state=" << _state << std::endl;
+		   return ;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Parsing state=" << _state << std::endl;
 	if ((this->*_parse[_state])())
 		_parser();
 }
@@ -94,8 +121,7 @@ bool Request::extract_first_line(void)
 		_query_string = "";
 	//
 
-	if (VERBOS)
-		std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Start line => method=" << _method << " path=" << _path << " version=" << _http_version << std::endl;
+
 
 	if (!method_is_valid(_method))
 		throw NotImplementedException("Unsupported HTTP method: " + _method);
@@ -105,12 +131,36 @@ bool Request::extract_first_line(void)
 	_buffer = _buffer.substr(sp_pos + 2);
 	_pos = 0;
 	_state = READ_HEADERS;
-	if (VERBOS)
-		std::cout << CYAN << "[REQUEST]" << RESET << " Transition to READ_HEADERS" << std::endl;
+	if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Transition to READ_HEADERS" << std::endl;
 	return true;
 }
 
-bool Request::extract_headers(void)
+const std::string& Request::get_http_version(void) const
+{
+	return _http_version;
+}
+
+void Request::start_save_to_file( void )
+{
+	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " creating temporary file for request body" << std::endl;
+	_read_method = READ_TO_FIL;
+	char buf[17];
+	std::ifstream file("/dev/urandom");
+	if (!file.is_open())
+		throw InternalServerErrorException("Failed to open /dev/urandom for generating temporary filename");
+	file.read(buf, 16);
+	buf[16] = '\0';
+	file.close();
+	filename = "/tmp/request_" + std::string(buf) + ".tmp";
+	if (DEBUG) std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << filename << std::endl;
+	// use file.seekg(0, std::ios::beg); to reset the file pointer to the beginning of the file before reading again if needed, since we have already read 16 bytes from /dev/urandom to generate the filename. This ensures that we can read from /dev/urandom again if we need to generate another filename in the future without any issues.
+	_outfile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
+	if (!_outfile.is_open())
+		throw InternalServerErrorException("Failed to create temporary file for request body");
+	// unlink(filename.c_str());
+}
+
+bool Request::extract_headers( void )
 {
 	size_t sp_pos = _buffer.find("\r\n\r\n");
 	if (sp_pos == std::string::npos)
@@ -118,14 +168,7 @@ bool Request::extract_headers(void)
 
 	std::string header_str = _buffer.substr(_pos, sp_pos - _pos);
 	_headers = new Header(header_str);
-
-	// TODO: pre validate the Routing HERE <<<<<<<<
-	// in here we will implement the Routing logic
-	// which is to find the matching server block and location block for the request path
-	// and also to check if the request method is supported by the location block.
-
-	if (VERBOS)
-		std::cout << BOLD_MAGENTA << "[REQUEST]" << RESET << " Headers parsed successfully" << std::endl;
+	if (DEBUG) std::cout << BOLD_MAGENTA << "[REQUEST]" << RESET << " Headers parsed successfully" << std::endl;
 	_pos = sp_pos + 4;
 	if (_headers->hasHeader("transfer-encoding"))
 	{
@@ -136,8 +179,7 @@ bool Request::extract_headers(void)
 		else
 			throw NotImplementedException("Transfer-Encoding not supported");
 		_read_bytes = BUFFER_SIZE;
-		if (VERBOS)
-			std::cout << MAGENTA << "[REQUEST]" << RESET << " Using chunked body parser" << std::endl;
+		if (DEBUG) std::cout << MAGENTA << "[REQUEST]" << RESET << " Using chunked body parser" << std::endl;
 	}
 	else if (_headers->hasHeader("content-length"))
 	{
@@ -150,17 +192,19 @@ bool Request::extract_headers(void)
 		if (n == 0)
 			_state = FINISHED;
 		else
+		{
+			if (n > BODY_LIMIT)
+				start_save_to_file();
 			_state = READ_PLAIN_BODY;
-		if (VERBOS)
-			std::cout << MAGENTA << "[REQUEST]" << RESET << " Content-Length=" << _content_length << std::endl;
+		}
+		if (DEBUG) std::cout << MAGENTA << "[REQUEST]" << RESET << " Content-Length=" << _content_length << std::endl;
 	}
 	else if (_method == "POST")
 		throw LengthRequiredException("POST request missing Content-Length header");
 	else
 		_state = FINISHED;
-	if (VERBOS && _state == FINISHED)
-		std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request completed after headers" << std::endl;
-
+	if (DEBUG && _state == FINISHED) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request completed after headers" << std::endl;
+	
 	_buffer = _buffer.substr(_pos);
 	_pos = 0;
 
@@ -172,26 +216,16 @@ RequestState Request::get_state(void) const
 	return _state;
 }
 
-// void Request::validate( void )
-// {
-// 	if (_state != FINISHED)
-// 		throw BadRequestException("Request is not fully parsed");
-// 	if (_body.size() != _content_length)
-// 		throw BadRequestException("Body size does not match Content-Length");
-// 	if (VERBOS) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request validation successful" << std::endl;
-// }
-
-bool Request::extract_plain_body(void)
+bool Request::extract_plain_body( void )
 {
-	if (_buffer.length() < _content_length)
+	(this->*_read[_read_method])(_buffer.c_str(), _buffer.size());
+	if (_body_size < _content_length)
 		return (false);
-	_body = _buffer.substr(0, _content_length);
 	_state = FINISHED;
-	if (VERBOS)
-		std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Plain body parsed, bytes=" << _body.size() << std::endl;
+	if (DEBUG) std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Plain body parsed, bytes=" << _body.size() << std::endl;
 	_pos = 0;
 	_buffer.clear();
-	if (_body.size() == _content_length)
+	if (_body_size == _content_length)
 		_state = FINISHED;
 	else
 		throw BadRequestException("Body size does not match Content-Length");
@@ -200,8 +234,10 @@ bool Request::extract_plain_body(void)
 
 bool Request::extract_chunked_body(void)
 {
-	while (true)
-	{
+	std::string dechunked_body;
+
+	while (true) {
+		size_t chunk_start = _pos;
 		size_t n = _buffer.find("\r\n", _pos);
 		if (n == std::string::npos)
 		{ // if i can't find the next line SEP, return and wait for more data to arrive
@@ -222,19 +258,17 @@ bool Request::extract_chunked_body(void)
 			_state = FINISHED;
 			break;
 		}
-		if (_buffer.size() - _pos >= (size_t)chunk_size)
-		{
-			_body += _buffer.substr(_pos, chunk_size);
+		if (_buffer.size() - _pos >= (size_t)chunk_size) {
+			std::string chunk = _buffer.substr(_pos, chunk_size);
+			(this->*_read[_read_method])(chunk.c_str(), chunk.size());
 			_pos += chunk_size + 2;
 		}
-		else
-		{
-			_body += _buffer.substr(_pos);
-			chunk_size -= _buffer.size() - _pos;
-			_pos = _buffer.size();
+		else {
+			_buffer = _buffer.substr(chunk_start);
+			_pos = 0;
+			return (false);
 		}
-		if (VERBOS)
-			std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
+		if (DEBUG) std::cout << CYAN << "[REQUEST]" << RESET << " Chunk fragment parsed, current size=" << _body.size() << std::endl;
 	}
 	return (true);
 }
@@ -250,13 +284,31 @@ const std::string &Request::getHeader(const std::string &name) const
 	return _headers->getHeader(name);
 }
 
-const std::string &Request::get_body(void) const
+std::string& Request::get_body(void)
 {
-	return _body;
+	if (_read_method == READ_TO_FIL && _body_is_set == false) {
+		if (!_outfile.is_open())
+			throw InternalServerErrorException("Temporary file for request body is not open");
+		_outfile.clear();
+		_outfile.seekg(0, std::ios::beg);
+		char buf[BUFFER_SIZE];
+		while (_outfile.read(buf, sizeof(buf))) {
+			_body.append(buf, _outfile.gcount());
+		}
+		if (_outfile.gcount() > 0) {
+			_body.append(buf, _outfile.gcount());
+		}
+		_body_is_set = true;
+	}
+    return _body;
 }
 
-// imane added this for cgi 06/06/2024
-const std::string &Request::get_query_string(void) const
+std::map<std::string, std::string> &Request::getHeaders()
+{
+	return _headers->getHeaders();
+}
+
+const std::string& Request::get_query_string( void ) const
 {
 	return _query_string;
 }
