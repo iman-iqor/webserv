@@ -156,7 +156,7 @@ CgiState_t *CgiHandler::start(
 		close(null_fd);
 		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
 		if (is_post_with_body) {
-			int fd = open(client->request.filename.c_str(), O_RDONLY);
+			int fd = open(client->request.get_filename().c_str(), O_RDONLY);
 			if (fd == -1) {
 				close_pipes(cgi_state);
 				exit(1);

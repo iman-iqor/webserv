@@ -45,25 +45,28 @@ class Request {
 	Location *_location;
 	ReadMethod _read_method;
 	bool _body_is_set;
-	
-    ssize_t (Request::*_read[2])( const char *buffer, ssize_t size );
     bool (Request::*_parse[4])( void );
+	std::string _filename;
 	
 public:
-	std::string filename;
 	Request( void );
 	~Request( void );
     void _parser( void );
 
-	ssize_t read_to_mem( const char *buffer, ssize_t size );
 	ssize_t read_to_file( const char *buffer, ssize_t size );
 	void append_request( const char *s, ssize_t size );
 	bool extract_first_line( void );
 	bool extract_headers( void );
 	bool extract_plain_body( void );
 	bool extract_chunked_body( void );
-	size_t get_content_length( void ) const;
     bool is_finished( void );
+	// add a method to start the save in file process, create a file and save fd
+	void start_save_to_file( void );
+	void close_outfile( void );
+
+	/* Getters */
+	std::string &get_filename(void);
+	size_t get_content_length( void ) const;
 	const std::string& get_path( void ) const;
 	const std::string& get_method( void ) const;
 	const std::string& getHeader(const std::string &name) const;
@@ -71,9 +74,10 @@ public:
 	const std::string& get_http_version(void) const;
 	RequestState get_state( void ) const ;
 	std::map<std::string, std::string> &getHeaders();
-	// add a method to start the save in file process, create a file and save fd
-	void start_save_to_file( void );
-	void close_outfile( void );
+
+	/* Setters */
+	void set_filename(const std::string &filename);
+
 };
 
 #endif // REQUEST_HPP

@@ -24,8 +24,6 @@ Request::Request(void)
 	_parse[READ_HEADERS] = &Request::extract_headers;
 	_parse[READ_PLAIN_BODY] = &Request::extract_plain_body;
 	_parse[READ_CHUNK_BODY] = &Request::extract_chunked_body;
-	_read[READ_TO_MEM] = &Request::read_to_mem;
-	_read[READ_TO_FIL] = &Request::read_to_file;
 	if (DEBUG)
 		std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " Parser initialized" << std::endl;
 }
@@ -55,16 +53,9 @@ const std::string &Request::get_method(void) const
 	return _method;
 }
 
-ssize_t Request::read_to_mem(const char *s, ssize_t size)
+std::string &Request::get_filename(void)
 {
-	if (DEBUG)
-		std::cout << CYAN << "[REQUEST]" << RESET << " reading " << size << " bytes into buffer" << std::endl;
-	;
-	if (_body_size + static_cast<size_t>(size) > _content_length)
-		size = _content_length - _body_size;
-	_body.append(s, size);
-	_body_size += size;
-	return size;
+	return _filename;
 }
 
 ssize_t Request::read_to_file(const char *s, ssize_t size)
@@ -149,15 +140,15 @@ void Request::start_save_to_file(void)
 	file.read(buf, 16);
 	buf[16] = '\0';
 	file.close();
-	filename = "request_debug.tmp";
-	// filename = "/tmp/request_" + std::string(buf) + ".tmp";
+	_filename = "request_debug.tmp";
+	// _filename = "/tmp/request_" + std::string(buf) + ".tmp";
 	if (DEBUG)
-		std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << filename << std::endl;
+		std::cout << BOLD_CYAN << "[REQUEST]" << RESET << " saving request body to file: " << _filename << std::endl;
 	// use file.seekg(0, std::ios::beg); to reset the file pointer to the beginning of the file before reading again if needed, since we have already read 16 bytes from /dev/urandom to generate the filename. This ensures that we can read from /dev/urandom again if we need to generate another filename in the future without any issues.
-	_outfile.open(filename.c_str(), std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
+	_outfile.open(_filename.c_str(), std::ios::binary | std::ios::out | std::ios::in | std::ios::trunc);
 	if (!_outfile.is_open())
 		throw InternalServerErrorException("Failed to create temporary file for request body");
-	// unlink(filename.c_str());
+	// unlink(_filename.c_str());
 }
 
 bool Request::extract_headers(void)
