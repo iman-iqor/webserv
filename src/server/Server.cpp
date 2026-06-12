@@ -140,17 +140,26 @@ void Server::start()
 			{
 				// events[i].data.fd is not valid when we stored a pointer in data.ptr.
 				// Retrieve the EpollData pointer and use its fd to find the client.
+				int client_fd = -1;
 				std::cerr << RED << "HTTP error: " << e.statusCode << " " << e.statusMessage << ": " << e.what() << RESET << std::endl;
 				EpollData *ed = NULL;
-				if (events[i].data.ptr)
+				if (events[i].data.ptr) {
 					ed = static_cast<EpollData *>(events[i].data.ptr);
-				int client_fd = (ed ? ed->fd : -1);
+					if (ed->type == CGI_PIPE) {
+						std::cout << RED << "Error occurred in CGI execution for client " << ed->client->fd << RESET << std::endl;
+						client_fd = ed->client->fd;
+					}
+					else if (ed->type == CLIENT) {
+						std::cout << RED << "Error occurred while handling client " << ed->fd << RESET << std::endl;
+						client_fd = ed->fd;
+					}
+				}
 				Client *client_ptr = NULL;
 				if (client_fd != -1 && clients.find(client_fd) != clients.end())
 					client_ptr = clients[client_fd];
 				handleClientError(client_ptr, e);
-				if (client_fd != -1)
-					closeClient(client_fd);
+				// if (client_fd != -1)
+				// 	closeClient(client_fd);
 			}
 			catch (const std::exception &e)
 			{
