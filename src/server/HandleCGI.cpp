@@ -217,11 +217,7 @@ void  Server::handleCGI(EpollData* data, uint32_t events)
 		client->ready_to_send = true;
 
 		struct epoll_event event;
-		EpollData *data = new EpollData();
-		data->client = client;
-		data->fd = client->fd;
-		data->type = CLIENT;
-		event.data.ptr = data;
+		event.data.ptr = epoll_data[client->fd];
 		event.events = EPOLLOUT;
 		epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
 		delete cgi_state;
