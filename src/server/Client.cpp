@@ -19,10 +19,7 @@ Client::~Client() {
     {
         kill(cgi_state->pid, SIGKILL);
         waitpid(cgi_state->pid, NULL, 0);
-        if (cgi_state->fdi[0] != -1) close(cgi_state->fdi[0]);
-        if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
-        if (cgi_state->fdo[0] != -1) close(cgi_state->fdo[0]);
-        if (cgi_state->fdo[1] != -1) close(cgi_state->fdo[1]);
+        close_pipes(cgi_state);
     }
     
     //Clean up buffer and response

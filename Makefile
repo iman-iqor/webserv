@@ -23,7 +23,6 @@ SRC = src/config/Parser.cpp \
 	src/server/HandleClient.cpp \
 	src/server/handleFileUpload.cpp \
 	src/server/handleDeleteFile.cpp \
-	src/server/buildResponse.cpp \
 	src/server/HandleCGI.cpp \
 	src/server/Client.cpp \
 	src/server/Socket.cpp \
@@ -71,5 +70,10 @@ fclean: clean
 
 re: fclean all
 
+debug: CXXFLAGS += -g -O0
+debug: all
 
-.PHONY: all clean fclean re
+debug_re: CXXFLAGS += -g -O0
+debug_re: re
+
+.PHONY: all clean fclean re debug debug_re

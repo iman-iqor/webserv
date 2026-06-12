@@ -4,7 +4,7 @@ import os
 
 # Read POST body from stdin
 content_length = int(os.environ.get('CONTENT_LENGTH', 0))
-body = sys.stdin.read(content_length) if content_length > 0 else ""
+body = sys.stdin.read(content_length) if content_length > 0 else "?"
 
 # Parse simple key=value pairs
 params = {}
@@ -29,9 +29,7 @@ print(f"""<!DOCTYPE html>\r
     </ul>\r
     <h2>Environment:</h2>\r
     <ul>\r
-        <li>METHOD: {os.environ.get('HTTP_REQUEST_METHOD', 'N/A')}</li>\r
-        <li>CONTENT_TYPE: {os.environ.get('CONTENT_TYPE', 'N/A')}</li>\r
-        <li>CONTENT_LENGTH: {os.environ.get('CONTENT_LENGTH', 'N/A')}</li>\r
+        {"\r\n".join(f"<li>{k} = {v}</li>" for k, v in os.environ.items())}\r
     </ul>\r
 </body>\r
 </html>""", end='')

@@ -24,6 +24,7 @@ enum RouteAction
     ERROR_500,
     ERROR_200,
     ERROR_411,
+    ERROR_501
 
 };
 //h
@@ -38,6 +39,7 @@ struct RouteInfo
     Location *location;//the location block that matched the request
     int http_status;
     std::string status_message;//ok or not found li  7bit
+    bool isHead;
     std::map<std::string,std::string> headers;//extra headers n9darnhtajom
     std::string file_extension;//for cgi execution to determine the binary to use
 };
@@ -57,7 +59,7 @@ class Router
         bool isDirectory(const std::string &path);
         bool isExecutable(const std::string &path);
         std::string getFileExtension(const std::string &path);
-
+        
         bool isUploadAllowed(Location* location);
         std::string sizeToString(size_t value);
         std::string timeToString(time_t value);
@@ -71,6 +73,9 @@ class Router
         RouteInfo routeDELETE(const Request &request,Location* location);
         
         std::string generateUploadFilename(const Request &request,Location* location);
+
+
+        std::string resolveErrorPage(int error_code, ServerBlock *server_block);
     };
 
 #endif

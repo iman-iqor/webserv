@@ -3,4 +3,4 @@
 .vscode/
 *.o
 webserv
-
+request_debug.tmp
