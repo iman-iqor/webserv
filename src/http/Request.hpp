@@ -52,7 +52,7 @@ class Request
 		std::ofstream body_file;
 
 		int error_code;
-
+		mutable std::string body_content;// remove this later
 		Header headers;
 		void parse_start_line();
 		void parse_headers();
@@ -73,7 +73,7 @@ class Request
 		RequestMethod get_method() const;
 
 		const std::string& get_method_str() const;
-		const std::string& get_body();
+		const std::string& get_body() const;
 		const std::string& get_query_string() const;
 		const std::string& get_http_version() const;
 		const std::string& get_body_file_path() const;
@@ -84,7 +84,6 @@ class Request
 		int	get_error_code() const;
 		
 		void parser(); 
-		const std::string& get_header(const std::string &name) const;
 		const std::map<std::string, std::string> &getHeaders();
 };
 

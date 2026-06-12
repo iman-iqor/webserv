@@ -3,7 +3,7 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
 {
     RouteInfo route_info;
     route_info.location = location;
-    if(request.get_method()=="HEAD")
+    if(request.get_method_str()=="HEAD")
         route_info.isHead=true;
     std::string file_path = resolveFilePath(request.get_path(), location);
     if (!fileExists(file_path)&& !isDirectory(file_path))

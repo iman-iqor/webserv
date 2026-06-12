@@ -5,7 +5,7 @@
 
 void Server::setupCGIEnv(Request &req,RouteInfo &route)
 {
-    setenv("REQUEST_METHOD", req.get_method().c_str(), 1);
+    setenv("REQUEST_METHOD", req.get_method_str().c_str(), 1);
     setenv("SCRIPT_FILENAME", route.cgi_string.c_str(), 1);
     setenv("PATH_INFO", req.get_path().c_str(), 1);
     setenv("QUERY_STRING",req.get_query_string().c_str(),1);
@@ -20,7 +20,7 @@ void Server::setupCGIEnv(Request &req,RouteInfo &route)
     
     //content lenght must always be set for post even if 0
     const std::string &body = req.get_body();
-    if(req.get_method() == "POST")
+    if(req.get_method_str() == "POST")
     {
         std::ostringstream ss;
         ss << body.size();
@@ -48,7 +48,7 @@ void Server::launchCGI(Client *client, RouteInfo route)
 {
 	const std::string &body = client->request.get_body();
     bool has_body = 0;
-    if(client->request.get_method() == "POST" && !body.empty())
+    if(client->request.get_method_str() == "POST" && !body.empty())
         has_body = 1;       
 
     int stdout_pipe[2];

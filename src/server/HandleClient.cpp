@@ -72,7 +72,7 @@ void Server::handleRead(Client *client)
     if (bytes > 0)
     {
         buffer[bytes] = '\0';
-        client->request.append_request(buffer, bytes);
+        client->request.append_to_buffer(buffer, bytes);
     }
     else
     {

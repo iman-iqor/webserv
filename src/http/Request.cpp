@@ -256,14 +256,14 @@ int Request::get_error_code() const { return error_code; } // Needed for the Rou
 
 RequestMethod Request::get_method() const { return method; }
 const std::string& Request::get_method_str() const { return method_str; }
-const std::string& Request::get_path() const { return path; }
+const std::string& Request::    get_path() const { return path; }
 const std::string& Request::get_query_string() const { return query_string; }
 const std::string& Request::get_http_version() const { return http_version; }
 
 size_t Request::get_content_length() const { return content_length; }
 size_t Request::get_body_size() const { return body_size; }
 
-const std::string& Request::get_header(const std::string &name) const {
+const std::string& Request::getHeader(const std::string &name) const {
     return headers.getHeader(name);
 }
 
@@ -273,4 +273,21 @@ const std::string& Request::get_body_file_path() const {
 
 const std::map<std::string, std::string>& Request::getHeaders() {
     return headers.getHeadersMap();
+}
+
+
+// for testing cgi 
+
+const std::string& Request::get_body() const {
+    // If the string is empty but a file exists, read the file into the string
+    if (body_content.empty() && !body_file_path.empty()) {
+        std::ifstream file(body_file_path.c_str(), std::ios::in | std::ios::binary);
+        if (file.is_open()) {
+            std::ostringstream contents;
+            contents << file.rdbuf(); // Read the entire file buffer
+            body_content = contents.str();
+            file.close();
+        }
+    }
+    return body_content;
 }

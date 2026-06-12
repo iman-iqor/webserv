@@ -63,7 +63,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
         return route_info;
     }
 
-    if (!isMethodAllowed(request.get_method(), route_info.location))
+    if (!isMethodAllowed(request.get_method_str(), route_info.location))
     {
         route_info.http_status = 405;
         route_info.status_message = "Method Not Allowed";
@@ -88,7 +88,7 @@ RouteInfo Router::route(const Request &request, ServerBlock *server_block)
         return route_info;
     }
 
-    std::string method = request.get_method();
+    std::string method = request.get_method_str();
 
     if (method == "GET" || method == "HEAD")
         return routeGET(request, route_info.location);
