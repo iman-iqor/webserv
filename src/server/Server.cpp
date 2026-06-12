@@ -112,7 +112,13 @@ void Server::handleClientError(Client *client, const HttpException &e)
 	response.handleResponse(route_info,server_block ? server_block->error_pages : std::map<int,std::string>(),client);
 
 	std::string res = response.build();
-	send(client->fd, res.c_str(), res.size(), 0);
+	std::cout << GREEN << "MSG: " << res << RESET << std::endl;
+	struct epoll_event event;
+    event.events = EPOLLOUT;
+    event.data.ptr = epoll_data[client->fd];
+	client->response = res;
+	client->ready_to_send = true;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
 }
 
 void Server::start()
