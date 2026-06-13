@@ -48,6 +48,8 @@ class Request {
     bool (Request::*_parse[4])( void );
 	std::string _filename;
 	ServerBlock *_server_block;
+	std::map<std::string, std::string> _params;
+	std::string _query_string;
 	
 public:
 	Request( void );
@@ -75,6 +77,7 @@ public:
 	const std::string& get_http_version(void) const;
 	RequestState get_state( void ) const ;
 	std::map<std::string, std::string> &getHeaders();
+	std::string &get_query_string(void);
 
 	/* Setters */
 	void set_filename(const std::string &filename);

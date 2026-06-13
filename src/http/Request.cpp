@@ -116,6 +116,13 @@ bool Request::extract_first_line(void)
 		throw BadRequestException("Invalid request line");
 
 	_buffer = _buffer.substr(sp_pos + 2);
+
+	if (DEBUG) {
+		for (std::map<std::string, std::string>::const_iterator it = _params.begin(); it != _params.end(); ++it) {
+			std::cout << "  Query parameter: " << it->first << " = " << it->second << std::endl;
+		}
+	}
+	
 	_pos = 0;
 	_state = READ_HEADERS;
 	if (DEBUG)
@@ -366,4 +373,9 @@ void Request::setServerBlock(ServerBlock *server_block)
 ServerBlock *Request::getServerBlock() const
 {
 	return _server_block;
+}
+
+std::string &Request::get_query_string(void)
+{
+	return _query_string;
 }

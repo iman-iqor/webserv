@@ -91,7 +91,10 @@ std::map<std::string, std::string> build_full_env_map(Client *client, const std:
 	full_env_map["SERVER_PROTOCOL"] = client->request.get_http_version();
 	full_env_map["SERVER_SOFTWARE"] = "webserv/1.0";
 	full_env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
-	full_env_map["PATH_INFO"] = "directory/youpi.bla";
+	full_env_map["PATH_INFO"] = "/img/gg";
+	full_env_map["PATH_TRANSLATED"] = client->request.get_path();
+	if (!client->request.get_query_string().empty())
+		full_env_map["QUERY_STRING"] = client->request.get_query_string();
 	return full_env_map;
 }
 
@@ -150,12 +153,11 @@ CgiState_t *CgiHandler::start(
 		}
 		size_t last_slash_pos = cgi_path.find_last_of('/');
 		std::string cgi_dir = cgi_path.substr(0, last_slash_pos);
+		// if (DEBUG) std::cout << "  CGI directory: " << cgi_dir << std::endl;
 		std::string cgi_script = cgi_path.substr(last_slash_pos + 1);
 		std::map<std::string, std::string> full_env_map = build_full_env_map(client, cgi_script, env_map);
 		char **envp = build_envp(full_env_map);
 		char **argv = build_args(cgi_script, bin_path);
-		dup2(null_fd, STDERR_FILENO);
-		close(null_fd);
 		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
 		close(cgi_state->fdo[0]); // Close read end of response pipe in child
 		if (is_post_with_body) {
@@ -167,9 +169,11 @@ CgiState_t *CgiHandler::start(
 			dup2(fd, STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
 			close (fd);
 		}
-		chdir(cgi_dir.c_str());
+		chdir(cgi_dir.c_str()); // TODO: handle fail
+		dup2(null_fd, STDERR_FILENO);
+		close(null_fd);
 		execve(bin_path.c_str(), argv, envp);
-		free_envp(envp);
+		// free_envp(envp);
 		free_args(argv);
 		// WARNING: more cleaning needed
 		exit(1); // If exec fails
