@@ -17,6 +17,11 @@ if body:
 
 # CGI response
 print("Content-Type: text/html\r\nStatus: 200 OK\r\n\r\n", end='')  # HTTP header
+# 1. Compute the list item blocks outside of the f-string expression
+parsed_params_html = "".join(f"<li>{k} = {v}</li>" for k, v in params.items())
+env_html = "\r\n".join(f"<li>{k} = {v}</li>" for k, v in os.environ.items())
+
+# 2. Print using clean, simple variable placeholders (No backslashes inside brackets!)
 print(f"""<!DOCTYPE html>\r
 <html>\r
 <body>\r
@@ -25,11 +30,11 @@ print(f"""<!DOCTYPE html>\r
     <p>{body}</p>\r
     <h2>Parsed Params:</h2>\r
     <ul>\r
-        {"".join(f"<li>{k} = {v}</li>" for k, v in params.items())}\r
+        {parsed_params_html}
     </ul>\r
     <h2>Environment:</h2>\r
     <ul>\r
-        {"\r\n".join(f"<li>{k} = {v}</li>" for k, v in os.environ.items())}\r
+        {env_html}
     </ul>\r
 </body>\r
 </html>""", end='')
