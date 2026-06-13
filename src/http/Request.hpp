@@ -47,6 +47,7 @@ class Request {
 	bool _body_is_set;
     bool (Request::*_parse[4])( void );
 	std::string _filename;
+	ServerBlock *_server_block;
 	
 public:
 	Request( void );
@@ -77,6 +78,8 @@ public:
 
 	/* Setters */
 	void set_filename(const std::string &filename);
+	ServerBlock *getServerBlock() const;
+	void setServerBlock(ServerBlock *server_block);
 
 };
 

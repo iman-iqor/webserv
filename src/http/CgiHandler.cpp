@@ -91,6 +91,7 @@ std::map<std::string, std::string> build_full_env_map(Client *client, const std:
 	full_env_map["SERVER_PROTOCOL"] = client->request.get_http_version();
 	full_env_map["SERVER_SOFTWARE"] = "webserv/1.0";
 	full_env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
+	full_env_map["PATH_INFO"] = "directory/youpi.bla";
 	return full_env_map;
 }
 

@@ -60,18 +60,19 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     }
 
     std::string extension = getFileExtension(file_path);
-    if (!location->cgi.empty())
+    if (!location->cgi.empty() && location->cgi.find(extension.substr(1)) != location->cgi.end())
     {
+    //    std::cout<<"is executable: "<<isExecutable(file_path)<<std::endl;
+    //         if (isExecutable(file_path))
+    //         {
        
-        if (isExecutable(file_path))
-        {
             route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;
             route_info.http_status = 200;
             route_info.status_message = "OK";
             return route_info;
-        }
+        // }
     }
     route_info.action = SERVE_FILE;
     route_info.file_path = file_path;

@@ -2,6 +2,9 @@
 
 void Server::acceptClient(int listen_fd)
 {
+
+
+
     int client_fd = accept(listen_fd, NULL, NULL); 
     
     if (client_fd < 0) {
@@ -9,7 +12,8 @@ void Server::acceptClient(int listen_fd)
         return;
     }
 
-    clients[client_fd] = new Client(listen_fd, client_fd);
+    Client *client = new Client(listen_fd, client_fd);
+    clients[client_fd] = client;
 
     struct epoll_event event;
     event.events = EPOLLIN;
@@ -28,6 +32,18 @@ void Server::acceptClient(int listen_fd)
         epoll_data.erase(client_fd);
         throw std::runtime_error("epoll_ctl client add failed");
     }
+   
+
+    ServerBlock *server_block = NULL;
+    if (fd_to_servers.find(client->listen_fd) != fd_to_servers.end())
+    {
+        if (fd_to_servers[client->listen_fd].size() > 0)
+        {
+            server_block = fd_to_servers[client->listen_fd][0];
+        }
+    }
+
+    client->request.setServerBlock(server_block);
    
     std::cout << "New client connected: " << client_fd << std::endl;
 }
