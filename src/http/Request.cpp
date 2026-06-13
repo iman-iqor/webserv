@@ -199,10 +199,6 @@ bool Request::extract_headers(void)
 		_state = FINISHED;
 	if (DEBUG && _state == FINISHED)
 		std::cout << BOLD_GREEN << "[REQUEST]" << RESET << " Request completed after headers" << std::endl;
-	if (_pos > _buffer.size())
-	{
-		std::cerr << RED << "Fatal 1" << RESET << std::endl;
-	}
 	_buffer = _buffer.substr(_pos);
 	_pos = 0;
 
