@@ -115,6 +115,7 @@ CgiState_t *CgiHandler::start(
 	cgi_state->cgi_output = "";
 	cgi_state->body_sent = 0;
 	cgi_state->ready_to_send = false;
+	cgi_state->output_sent = 0;
 
 	if (!cgi_state) {
 		throw std::runtime_error("Failed to allocate memory for CGI state");
@@ -155,6 +156,7 @@ CgiState_t *CgiHandler::start(
 		dup2(null_fd, STDERR_FILENO);
 		close(null_fd);
 		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
+		close(cgi_state->fdo[0]); // Close read end of response pipe in child
 		if (is_post_with_body) {
 			int fd = open(client->request.get_filename().c_str(), O_RDONLY);
 			if (fd == -1) {
@@ -162,6 +164,7 @@ CgiState_t *CgiHandler::start(
 				exit(1);
 			}
 			dup2(fd, STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
+			close (fd);
 		}
 		chdir(cgi_dir.c_str());
 		execve(bin_path.c_str(), argv, envp);
