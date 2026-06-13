@@ -185,6 +185,8 @@ bool Request::extract_headers(void)
 			throw BadRequestException("Invalid Content-Length header");
 		long n = std::strtol(value.c_str(), NULL, 10);
 		_content_length = n;
+		if (_content_length > static_cast<size_t>(_server_block->client_max_body_size))
+			throw PayloadTooLargeException("Body size exceeds server limit: " + ft_itoa(_server_block->client_max_body_size));
 		if (n == 0)
 			_state = FINISHED;
 		else
@@ -300,6 +302,8 @@ bool Request::extract_chunked_body(void)
 
 			std::string chunk = _buffer.substr(_pos, chunk_size);
 			read_to_file(chunk.c_str(), chunk.size());
+			if (_body_size > static_cast<size_t>(_server_block->client_max_body_size))
+				throw PayloadTooLargeException("Body size exceeds server limit: " + ft_itoa(_server_block->client_max_body_size));
 			_pos += chunk_size + 2;
 		}
 		else
@@ -350,4 +354,16 @@ std::string &Request::get_body(void)
 std::map<std::string, std::string> &Request::getHeaders()
 {
 	return _headers->getHeaders();
+}
+
+void Request::setServerBlock(ServerBlock *server_block)
+{
+	if (server_block == NULL)
+		throw InternalServerErrorException("Server block is NULL");
+	_server_block = server_block;
+}
+
+ServerBlock *Request::getServerBlock() const
+{
+	return _server_block;
 }

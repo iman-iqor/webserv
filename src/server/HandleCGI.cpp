@@ -10,17 +10,33 @@ typedef struct CgiResponse_s CgiResponse_t;
 
 CgiResponse_t parse_cgi_response(const std::string &cgi_output) {
 	// parse CGI headers
+
+    CgiResponse_t response;
+    if (cgi_output.empty()) {
+        response.body = "";
+        response.status_code = 200;
+        response.status_message = "OK";
+        std::cout << YELLOW << "Warning: No headers found in CGI response. Treating entire output as body." << RESET << std::endl;
+        return response;
+    }
 	if (DEBUG) std::cout << GREEN << "Parsing CGI response..." << RESET << std::endl; // Debug print of CGI response parsing
-	CgiResponse_t response;
 	size_t header_end = cgi_output.find("\r\n\r\n");
 	if (header_end == std::string::npos) {
-		throw BadGatewayException("Invalid CGI response: missing header-body separator");
+		header_end = 0;
 	}
 	if (DEBUG) std::cout << "  Found header-body separator at index " << header_end << "." << RESET << std::endl; // Debug print of header-body separator index
 
-	std::string header_str = cgi_output.substr(0, header_end + 4);
-	response.body = cgi_output.substr(header_end + 4);
-
+    std::string header_str;
+    if (header_end != 0)
+    { 
+        header_str = cgi_output.substr(0, header_end + 4);
+        response.body = cgi_output.substr(header_end + 4);
+    }
+    else
+    {
+        header_str = "";
+        response.body = cgi_output; // Debug print of missing headers warning
+    }
 	if (DEBUG) std::cout << "  Extracted headers:\n" << header_str << RESET << std::endl; // Debug print of extracted headers
 
 	size_t pos = 0;
