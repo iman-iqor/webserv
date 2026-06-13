@@ -69,7 +69,7 @@ void Server::launchCGI(int client_fd, RouteInfo &route, Client *client)
             close(body_fd);
         }
 
-        // close all inherited fds
+        // close all inherited fdsl
         for (int fd = 3; fd < 1024; fd++)
             close(fd);
 
