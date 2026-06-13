@@ -65,7 +65,7 @@ RouteInfo Router::routeGET(const Request &request, Location *location)
     //    std::cout<<"is executable: "<<isExecutable(file_path)<<std::endl;
     //         if (isExecutable(file_path))
     //         {
-       
+
             route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
             route_info.cgi_string = file_path;

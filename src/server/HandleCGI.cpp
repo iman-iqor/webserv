@@ -30,7 +30,7 @@ CgiResponse_t parse_cgi_response(const std::string &cgi_output) {
     if (header_end != 0)
     { 
         header_str = cgi_output.substr(0, header_end + 4);
-	response.body = cgi_output.substr(header_end + 4);
+        response.body = cgi_output.substr(header_end + 4);
     }
     else
     {

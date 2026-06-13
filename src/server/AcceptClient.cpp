@@ -44,6 +44,6 @@ void Server::acceptClient(int listen_fd)
     }
 
     client->request.setServerBlock(server_block);
-   
+
     std::cout << "New client connected: " << client_fd << std::endl;
 }
