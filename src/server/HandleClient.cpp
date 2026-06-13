@@ -55,11 +55,9 @@ void Server::handleWrite(Client *client)
         }
         else
         {
-
             struct epoll_event event;
             event.events = EPOLLOUT;
-            EpollData *data = new EpollData(client->fd, CLIENT, client);
-            event.data.ptr = data;
+            event.data.ptr = epoll_data[client->fd];
             epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
         }
     }
@@ -95,7 +93,9 @@ std::string Server::intToString(size_t n)
 
 void Server::processRequest(int client_fd)
 {
+    std::cout << "Processing request for client " << client_fd << std::endl;
     Client *client = clients[client_fd];
+    client->request.close_outfile();
 
     ServerBlock *server_block = NULL;
     if (fd_to_servers.find(client->listen_fd) != fd_to_servers.end())
@@ -114,8 +114,6 @@ void Server::processRequest(int client_fd)
     }
 
     RouteInfo route = router->route(client->request, server_block);
-    std::cout<<"Route action: "<<route.action<<" for client "<<client_fd<<std::endl;
-    std::cout<<"Route file path: "<<route.file_path<<" for client "<<client_fd<<std::endl;  
 
     if (route.action == EXECUTE_CGI) {
         std::string bin_path = route.location->cgi[route.file_extension.substr(1)]; // remove the dot from extension
@@ -133,9 +131,8 @@ void Server::processRequest(int client_fd)
 
     std::cout << "\033[32mPrepared response for client " << client_fd << ", switching to write mode\033[0m" << std::endl;
     struct epoll_event event;
-    EpollData *data = new EpollData(client_fd, CLIENT, client);
-    event.data.ptr = data;
     event.events = EPOLLOUT;
+    event.data.ptr = epoll_data[client_fd];
     epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client_fd, &event);
     std::cout << "\033[32mClient " << client_fd << " is now ready to send response\033[0m" << std::endl;
 }

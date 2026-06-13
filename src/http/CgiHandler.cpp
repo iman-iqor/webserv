@@ -8,10 +8,7 @@ std::string create_http_key(const std::string &key) {
 			http_key[i] = '_';
 		}
 	}
-	if (http_key == "CONTENT_TYPE" || http_key == "CONTENT_LENGTH") {
-		return http_key;
-	}
-	return "HTTP_" + http_key;
+	return http_key;
 }
 
 char **CgiHandler::build_envp(const std::map< std::string, std::string > &env_map) {
@@ -51,8 +48,6 @@ void CgiHandler::set_non_blocking(int fd) {
 }
 
 void close_pipes(CgiState_t *cgi_state) {
-	if (cgi_state->fdi[0] != -1) close(cgi_state->fdi[0]);
-	if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
 	if (cgi_state->fdo[0] != -1) close(cgi_state->fdo[0]);
 	if (cgi_state->fdo[1] != -1) close(cgi_state->fdo[1]);
 }
@@ -96,6 +91,10 @@ std::map<std::string, std::string> build_full_env_map(Client *client, const std:
 	full_env_map["SERVER_PROTOCOL"] = client->request.get_http_version();
 	full_env_map["SERVER_SOFTWARE"] = "webserv/1.0";
 	full_env_map["GATEWAY_INTERFACE"] = "CGI/1.1";
+	full_env_map["PATH_INFO"] = "/img/gg";
+	full_env_map["PATH_TRANSLATED"] = client->request.get_path();
+	if (!client->request.get_query_string().empty())
+		full_env_map["QUERY_STRING"] = client->request.get_query_string();
 	return full_env_map;
 }
 
@@ -106,8 +105,8 @@ CgiState_t *CgiHandler::start(
 	int epoll_fd,
 	const std::map< std::string, std::string > &env_map
 ) {
-	if (DEBUG) {
-		std::cout << GREEN << "Starting CGI execution for client..." << RESET << std::endl;
+	{
+		std::cout << GREEN << "Starting CGI execution for client: " << client->fd << RESET << std::endl;
 		std::cout << "  CGI path: " << cgi_path << std::endl;
 		std::cout << "  Binary path: " << bin_path << std::endl;
 	}
@@ -115,25 +114,28 @@ CgiState_t *CgiHandler::start(
 	CgiState_t *cgi_state = new CgiState_t;
 	cgi_state->fdo[0] = -1;
 	cgi_state->fdo[1] = -1;
-	cgi_state->fdi[0] = -1;
-	cgi_state->fdi[1] = -1;
 	cgi_state->pid = -1;
-	cgi_state->req_w_fd = -1;
 	cgi_state->res_r_fd = -1;
 	cgi_state->cgi_output = "";
 	cgi_state->body_sent = 0;
 	cgi_state->ready_to_send = false;
+	cgi_state->output_sent = 0;
 
 	if (!cgi_state) {
 		throw std::runtime_error("Failed to allocate memory for CGI state");
 	}
-	bool is_post_with_body = (client->request.get_method() == "POST" && client->request.get_content_length() > 0);
+	bool is_post_with_body = (client->request.get_method() == "POST");
+	if (is_post_with_body) {
+		if (DEBUG) std::cout <<  RED <<  "  Request method is POST, checking for request body..." << RESET << std::endl; // Debug print of request method and content length
+		if (client->request.get_content_length() > 0) {
+			if (DEBUG) std::cout << "  Request has body with Content-Length: " << client->request.get_content_length() << std::endl; // Debug print of content length
+		} else {
+			if (DEBUG) std::cout << "  Request has no body or Content-Length is zero." << std::endl; // Debug print of no body
+		}
+	}
 	if (DEBUG) std::cout << "  CGI request method: " << client->request.get_method() << std::endl; // Debug print of request method and content length
 
 	open_pipe(cgi_state, cgi_state->fdo); // Always open the output pipe for CGI response
-	if (is_post_with_body) {
-		open_pipe(cgi_state, cgi_state->fdi);
-	}
 
 	if (DEBUG) std::cout << "  Pipes opened successfully. Forking process..." << std::endl; // Debug print before forking
 	pid_t pid = fork();
@@ -151,18 +153,27 @@ CgiState_t *CgiHandler::start(
 		}
 		size_t last_slash_pos = cgi_path.find_last_of('/');
 		std::string cgi_dir = cgi_path.substr(0, last_slash_pos);
+		// if (DEBUG) std::cout << "  CGI directory: " << cgi_dir << std::endl;
 		std::string cgi_script = cgi_path.substr(last_slash_pos + 1);
 		std::map<std::string, std::string> full_env_map = build_full_env_map(client, cgi_script, env_map);
 		char **envp = build_envp(full_env_map);
 		char **argv = build_args(cgi_script, bin_path);
-		dup2(null_fd, STDERR_FILENO); // Redirect CGI child's stderr to /dev/null if there's no request body
-		close(null_fd);
 		dup2(cgi_state->fdo[1], STDOUT_FILENO); // Redirect CGI child's stdout to write end of response pipe
-		if (is_post_with_body)
-			dup2(cgi_state->fdi[0], STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
-		chdir(cgi_dir.c_str());
+		close(cgi_state->fdo[0]); // Close read end of response pipe in child
+		if (is_post_with_body) {
+			int fd = open(client->request.get_filename().c_str(), O_RDONLY);
+			if (fd == -1) {
+				close_pipes(cgi_state);
+				exit(1);
+			}
+			dup2(fd, STDIN_FILENO); // Redirect CGI child's stdin to read end of request pipe
+			close (fd);
+		}
+		chdir(cgi_dir.c_str()); // TODO: handle fail
+		dup2(null_fd, STDERR_FILENO);
+		close(null_fd);
 		execve(bin_path.c_str(), argv, envp);
-		free_envp(envp);
+		// free_envp(envp);
 		free_args(argv);
 		// WARNING: more cleaning needed
 		exit(1); // If exec fails
@@ -170,11 +181,6 @@ CgiState_t *CgiHandler::start(
 
 	// TODO: Check if all fd are closed
 	// parent process
-	if (is_post_with_body) {
-		if (DEBUG) std::cout << GREEN << "In CGI parent process. Closing unused pipe ends and setting up epoll..." << RESET << std::endl; // Debug print in parent process
-		close(cgi_state->fdi[0]); // close read end of request pipe in parent
-		set_non_blocking(cgi_state->fdi[1]);
-	}
 	close(cgi_state->fdo[1]); // close write end of response pipe in parent
 
 	set_non_blocking(cgi_state->fdo[0]);
@@ -182,15 +188,14 @@ CgiState_t *CgiHandler::start(
 	// Add fdo[0] to epoll for monitoring CGI output
 	struct epoll_event event;
 	event.events = EPOLLIN;
-	EpollData* data = new EpollData(cgi_state->fdo[0], CGI_PIPE, client);
-	// data->client = client;
-	// data->fd = cgi_state->fdo[0];
-	// data->type = CGI_PIPE;
+	EpollData* data = new EpollData();
+	data->client = client;
+	data->fd = cgi_state->fdo[0];
+	data->type = CGI_PIPE;
 	event.data.ptr = data;
 	data->client->cgi_state = cgi_state; // Store CGI state in EpollData for access in event handler
 
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdo[0], &event) == -1) {
-		if (is_post_with_body && cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
 		close(cgi_state->fdo[0]);
 		kill(pid, SIGKILL);
 		delete data;
@@ -199,32 +204,31 @@ CgiState_t *CgiHandler::start(
 		std::cout << GREEN << "Successfully added CGI output pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding to epoll
 	}
 
-	if (is_post_with_body) {
-		// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
-		struct epoll_event req_event;
-		req_event.events = EPOLLOUT;
-		EpollData* req_data = new EpollData(client->cgi_state->fdi[1], CGI_PIPE, client);
-		// req_data->client = client;
-		// req_data->fd = cgi_state->fdi[1];
-		// req_data->type = CGI_PIPE;
-		req_data->client->cgi_state = cgi_state;
-		req_event.data.ptr = req_data;
+	// if (is_post_with_body) {
+	// 	// If there's a request body that hasn't been fully sent to the CGI child yet, we should also add the write end of the request pipe to epoll for monitoring when it's ready to send more data.
+	// 	struct epoll_event req_event;
+	// 	req_event.events = EPOLLOUT;
+	// 	EpollData* req_data = new EpollData(client->cgi_state->fdi[1], CGI_PIPE, client);
+	// 	// req_data->client = client;
+	// 	// req_data->fd = cgi_state->fdi[1];
+	// 	// req_data->type = CGI_PIPE;
+	// 	req_data->client->cgi_state = cgi_state;
+	// 	req_event.data.ptr = req_data;
 
-		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {
-			if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
-			close(cgi_state->fdo[0]);
-			kill(pid, SIGKILL);
-			delete data;
-			delete req_data;
-			throw std::runtime_error("epoll_ctl error");
-		} else if (DEBUG) {
-			std::cout << GREEN << "Successfully added CGI request pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding request pipe to epoll
-		}
-	}
+	// 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, cgi_state->fdi[1], &req_event) == -1) {
+	// 		if (cgi_state->fdi[1] != -1) close(cgi_state->fdi[1]);
+	// 		close(cgi_state->fdo[0]);
+	// 		kill(pid, SIGKILL);
+	// 		delete data;
+	// 		delete req_data;
+	// 		throw std::runtime_error("epoll_ctl error");
+	// 	} else if (DEBUG) {
+	// 		std::cout << GREEN << "Successfully added CGI request pipe to epoll for monitoring." << RESET << std::endl; // Debug print after successfully adding request pipe to epoll
+	// 	}
+	// }
 
 	// Update cgi_state with the fork result and return
 	cgi_state->pid = pid;
-	cgi_state->req_w_fd = cgi_state->fdi[1];
 	cgi_state->res_r_fd = cgi_state->fdo[0];
 	if (DEBUG) std::cout << GREEN << "CGI execution started successfully with PID " << pid << "." << RESET << std::endl; // Debug print of CGI execution start
 	return cgi_state;

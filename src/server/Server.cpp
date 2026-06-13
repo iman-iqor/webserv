@@ -5,7 +5,7 @@ volatile sig_atomic_t g_shutdown = 0; // This flag will be set to true when a sh
 Server::Server(Config &config)
 {
 	this->config = config;
-	router = new Router(&config);
+	router = new Router(&this->config);
 	epoll_fd = -1;
 }
 
@@ -49,7 +49,11 @@ void Server::initEpoll()
 
 	for (size_t i = 0; i < listen_fds.size(); i++)
 	{
-		EpollData *data = new EpollData(listen_fds[i], SERVER, NULL);
+		EpollData *data = new EpollData();
+		data->fd = listen_fds[i];
+		data->type = SERVER;
+		data->client = NULL;
+		epoll_data[listen_fds[i]] = data;
 		event.data.ptr = data;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fds[i], &event) == -1)
 			throw std::runtime_error("epoll_ctl ADD failed");
@@ -108,7 +112,13 @@ void Server::handleClientError(Client *client, const HttpException &e)
 	response.handleResponse(route_info,server_block ? server_block->error_pages : std::map<int,std::string>(),client);
 
 	std::string res = response.build();
-	send(client->fd, res.c_str(), res.size(), 0);
+	std::cout << GREEN << "MSG: " << res << RESET << std::endl;
+	struct epoll_event event;
+    event.events = EPOLLOUT;
+    event.data.ptr = epoll_data[client->fd];
+	client->response = res;
+	client->ready_to_send = true;
+    epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client->fd, &event);
 }
 
 void Server::start()
@@ -136,17 +146,26 @@ void Server::start()
 			{
 				// events[i].data.fd is not valid when we stored a pointer in data.ptr.
 				// Retrieve the EpollData pointer and use its fd to find the client.
+				int client_fd = -1;
 				std::cerr << RED << "HTTP error: " << e.statusCode << " " << e.statusMessage << ": " << e.what() << RESET << std::endl;
 				EpollData *ed = NULL;
-				if (events[i].data.ptr)
+				if (events[i].data.ptr) {
 					ed = static_cast<EpollData *>(events[i].data.ptr);
-				int client_fd = (ed ? ed->fd : -1);
+					if (ed->type == CGI_PIPE) {
+						std::cout << RED << "Error occurred in CGI execution for client " << ed->client->fd << RESET << std::endl;
+						client_fd = ed->client->fd;
+					}
+					else if (ed->type == CLIENT) {
+						std::cout << RED << "Error occurred while handling client " << ed->fd << RESET << std::endl;
+						client_fd = ed->fd;
+					}
+				}
 				Client *client_ptr = NULL;
 				if (client_fd != -1 && clients.find(client_fd) != clients.end())
 					client_ptr = clients[client_fd];
 				handleClientError(client_ptr, e);
-				if (client_fd != -1)
-					closeClient(client_fd);
+				// if (client_fd != -1)
+				// 	closeClient(client_fd);
 			}
 			catch (const std::exception &e)
 			{
@@ -175,6 +194,11 @@ void Server::closeClient(int fd)
 	{
 		delete clients[fd];
 		clients.erase(fd);
+	}
+	if (epoll_data.find(fd) != epoll_data.end())
+	{
+		delete epoll_data[fd];
+		epoll_data.erase(fd);
 	}
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);

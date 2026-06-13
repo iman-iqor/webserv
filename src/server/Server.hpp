@@ -36,7 +36,6 @@ enum FDType
 
 struct EpollData
 {
-    EpollData(int fd, FDType type, Client *client) : fd(fd), type(type), client(client) {}
     int fd;
     FDType type;
     Client *client;
@@ -52,6 +51,7 @@ private:
 
     std::map<int, Client *> clients;
     std::map<int, std::vector<ServerBlock *> > fd_to_servers;
+    std::map<int, EpollData *> epoll_data;
     Router *router;
 
 public:

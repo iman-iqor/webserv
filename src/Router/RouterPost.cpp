@@ -7,6 +7,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     route_info.http_status = 200;
     route_info.status_message = "OK";
 
+
     // validate content_length
     std::string content_length_str = request.getHeader("Content-Length");
     if (!content_length_str.empty())
@@ -32,10 +33,10 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
     // check for CGI scripts cause post can trigger CGI a bro
     std::string extension = getFileExtension(file_path);
 
-    if (!location->cgi.empty())
+    if (!location->cgi.empty() && location->cgi.find(extension.substr(1)) != location->cgi.end())
     {
-        if (fileExists(file_path) && isExecutable(file_path))
-        {
+        // if (fileExists(file_path) && isExecutable(file_path))
+        // {
             // execute cgi with post data
             route_info.file_extension = extension;
             route_info.action = EXECUTE_CGI;
@@ -43,7 +44,7 @@ RouteInfo Router::routePOST(const Request &request, Location *location)
             route_info.http_status = 200;
             route_info.status_message = "OK";
             return route_info;
-        }
+        // }
     }
 
     // check if uploads are allowed
@@ -78,6 +79,7 @@ std::string Router::generateUploadFilename(const Request &request, Location *loc
     (void)location;
 
     // try to get filename from content-disposition
+    
 
     try
     {
